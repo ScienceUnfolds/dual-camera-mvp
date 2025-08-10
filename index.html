@@ -26,30 +26,21 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* Mirror the video to act as a "selfie" */
         }
-        #frontCameraVideo {
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-            width: 150px;
-            height: 112px; /* 4:3 aspect ratio */
-            border: 2px solid white;
-            z-index: 10;
+        .mirrored {
+            transform: scaleX(-1);
         }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4">
     <div class="max-w-xl w-full bg-white rounded-xl shadow-2xl p-6 md:p-8 space-y-6">
         <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-800">Dual-Camera MVP</h1>
-        <p class="text-center text-gray-600">A proof-of-concept for capturing video from two cameras simultaneously.</p>
+        <p class="text-center text-gray-600">A proof-of-concept for capturing photos with front and rear cameras.</p>
         
         <!-- Video and Preview Container -->
         <div class="video-container rounded-xl overflow-hidden shadow-lg border-4 border-gray-200">
-            <!-- Main Rear Camera View -->
-            <video id="rearCameraVideo" autoplay playsinline muted></video>
-            <!-- Picture-in-Picture Front Camera View -->
-            <video id="frontCameraVideo" autoplay playsinline muted class="rounded-lg shadow-lg"></video>
+            <!-- Main Camera View -->
+            <video id="cameraVideo" autoplay playsinline muted></video>
             <!-- Hidden Canvas for image processing -->
             <canvas id="hiddenCanvas" class="hidden"></canvas>
             <!-- Image tag to display the captured photo -->
@@ -58,10 +49,16 @@
 
         <!-- Buttons and User Feedback -->
         <div class="flex flex-col space-y-4">
-            <button id="captureButton"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-full text-lg shadow-xl transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                Capture Photo
-            </button>
+            <div class="flex space-x-4">
+                <button id="captureButton"
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-full text-lg shadow-xl transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    Capture Photo
+                </button>
+                <button id="switchCameraButton"
+                        class="w-auto bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-full text-lg shadow-xl transition-transform transform hover:scale-105">
+                    Switch Camera
+                </button>
+            </div>
             <button id="restartButton"
                     class="hidden bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-full text-lg shadow-xl transition-transform transform hover:scale-105">
                 Take Another Photo
@@ -81,12 +78,7 @@
     </div>
 
     <script>
-        // Use a UUID for a more robust unique ID, in case multiple users are running this.
-        // This is a default to prevent errors if the app ID isn't available.
-        const userId = typeof __app_id !== 'undefined' ? __app_id : 'default-user-id-' + Math.random().toString(36).substring(2, 9);
-        
         // This function is for displaying messages and status updates to the user.
-        // It takes a message and a type (e.g., 'info', 'success', 'error') to style the box.
         const log = (message, type = 'info') => {
             const messageBox = document.getElementById('messageBox');
             messageBox.textContent = message;
@@ -102,69 +94,56 @@
         };
 
         // Get references to all the necessary HTML elements.
-        const rearCameraVideo = document.getElementById('rearCameraVideo');
-        const frontCameraVideo = document.getElementById('frontCameraVideo');
+        const cameraVideo = document.getElementById('cameraVideo');
         const captureButton = document.getElementById('captureButton');
+        const switchCameraButton = document.getElementById('switchCameraButton');
         const restartButton = document.getElementById('restartButton');
         const capturedImage = document.getElementById('capturedImage');
         const hiddenCanvas = document.getElementById('hiddenCanvas');
         const downloadLink = document.getElementById('downloadLink');
 
         // Variables to hold the camera stream objects.
-        let rearCameraStream = null;
-        let frontCameraStream = null;
+        let currentCameraStream = null;
+        let isFrontCamera = false;
 
-        // Function to start the video streams from the cameras.
-        async function startCameras() {
-            log('Requesting camera access...');
+        // Function to stop the current camera stream.
+        function stopCamera() {
+            if (currentCameraStream) {
+                currentCameraStream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        // Function to start the video stream from a specified camera.
+        async function startCamera(facingMode) {
+            log(`Requesting ${facingMode} camera...`);
             captureButton.disabled = true;
+            stopCamera();
 
             try {
-                // Try to get the front camera stream first.
-                try {
-                    frontCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                    frontCameraVideo.srcObject = frontCameraStream;
-                    log('Front camera stream started. Requesting rear camera...', 'info');
-                } catch (err) {
-                    console.error("Error starting front camera: ", err);
-                    log('Failed to start front camera. Please check permissions.', 'error');
-                }
-                
-                // Then, try to get the rear camera stream.
-                try {
-                    rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    rearCameraVideo.srcObject = rearCameraStream;
-                    log('Rear camera stream started.', 'info');
-                } catch (err) {
-                    console.error("Error starting rear camera: ", err);
-                    log('Failed to start rear camera. Please check permissions.', 'error');
-                }
-                
-                // Check if both streams were successfully acquired.
-                if (rearCameraStream && frontCameraStream) {
-                    log('Both cameras are ready!', 'success');
-                    captureButton.disabled = false;
+                currentCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode } });
+                cameraVideo.srcObject = currentCameraStream;
+                log(`${facingMode} camera is ready!`, 'success');
+                captureButton.disabled = false;
+
+                // Toggle mirroring for the front camera
+                if (facingMode === 'user') {
+                    cameraVideo.classList.add('mirrored');
                 } else {
-                    log('Could not get streams from both cameras simultaneously. This feature may not be supported on your device or browser.', 'error');
-                    captureButton.disabled = true;
-                    return;
+                    cameraVideo.classList.remove('mirrored');
                 }
 
             } catch (err) {
-                console.error("General error accessing camera: ", err);
-                log('Failed to access cameras. Please check permissions.', 'error');
+                console.error(`Error accessing ${facingMode} camera: `, err);
+                log(`Failed to access ${facingMode} camera. Please check permissions.`, 'error');
                 captureButton.disabled = true;
             }
         }
 
-        // Function to stop all camera streams to save battery and resources.
-        function stopCameras() {
-            if (rearCameraStream) {
-                rearCameraStream.getTracks().forEach(track => track.stop());
-            }
-            if (frontCameraStream) {
-                frontCameraStream.getTracks().forEach(track => track.stop());
-            }
+        // Function to switch between front and rear cameras.
+        function switchCamera() {
+            isFrontCamera = !isFrontCamera;
+            const facingMode = isFrontCamera ? 'user' : 'environment';
+            startCamera(facingMode);
         }
 
         // Function to reset the app to its initial state for a new photo.
@@ -172,52 +151,58 @@
             capturedImage.classList.add('hidden');
             downloadLink.classList.add('hidden');
             restartButton.classList.add('hidden');
+            
             captureButton.classList.remove('hidden');
+            switchCameraButton.classList.remove('hidden');
 
-            rearCameraVideo.classList.remove('hidden');
-            frontCameraVideo.classList.remove('hidden');
+            cameraVideo.classList.remove('hidden');
 
-            startCameras();
+            startCamera(isFrontCamera ? 'user' : 'environment');
         }
 
         // Event listener for the capture button.
         captureButton.addEventListener('click', () => {
             log('Capturing photo...', 'info');
             captureButton.classList.add('hidden'); 
+            switchCameraButton.classList.add('hidden');
             restartButton.classList.remove('hidden'); 
 
-            hiddenCanvas.width = rearCameraVideo.videoWidth;
-            hiddenCanvas.height = rearCameraVideo.videoHeight;
+            hiddenCanvas.width = cameraVideo.videoWidth;
+            hiddenCanvas.height = cameraVideo.videoHeight;
             const ctx = hiddenCanvas.getContext('2d');
 
-            ctx.save();
-            ctx.scale(-1, 1);
-            ctx.drawImage(rearCameraVideo, -hiddenCanvas.width, 0, hiddenCanvas.width, hiddenCanvas.height);
-            ctx.restore();
-
-            const pipWidth = rearCameraVideo.videoWidth * 0.3; 
-            const pipHeight = pipWidth * (frontCameraVideo.videoHeight / frontCameraVideo.videoWidth);
-            const pipX = hiddenCanvas.width - pipWidth - (rearCameraVideo.videoWidth * 0.05);
-            const pipY = hiddenCanvas.height - pipHeight - (rearCameraVideo.videoHeight * 0.05); 
-            
-            ctx.save();
-            ctx.scale(-1, 1);
-            ctx.drawImage(frontCameraVideo, -pipX - pipWidth, pipY, pipWidth, pipHeight);
-            ctx.restore();
+            // Handle mirroring for the front camera
+            if (isFrontCamera) {
+                ctx.save();
+                ctx.scale(-1, 1);
+                ctx.drawImage(cameraVideo, -hiddenCanvas.width, 0, hiddenCanvas.width, hiddenCanvas.height);
+                ctx.restore();
+            } else {
+                ctx.drawImage(cameraVideo, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            }
 
             const imageDataURL = hiddenCanvas.toDataURL('image/png');
 
-            rearCameraVideo.classList.add('hidden');
-            frontCameraVideo.classList.add('hidden');
+            cameraVideo.classList.add('hidden');
             capturedImage.src = imageDataURL;
             capturedImage.classList.remove('hidden');
+            
+            // Apply mirroring to the captured image if it was from the front camera.
+            if (isFrontCamera) {
+                capturedImage.classList.add('mirrored');
+            } else {
+                capturedImage.classList.remove('mirrored');
+            }
 
             log('Photo captured!', 'success');
             downloadLink.href = imageDataURL;
             downloadLink.classList.remove('hidden');
 
-            stopCameras();
+            stopCamera();
         });
+
+        // Event listener for the switch camera button.
+        switchCameraButton.addEventListener('click', switchCamera);
 
         // Event listener for the restart button.
         restartButton.addEventListener('click', () => {
@@ -225,7 +210,9 @@
         });
 
         // The 'window.onload' event ensures the cameras start automatically when the page loads.
-        window.onload = startCameras;
+        window.onload = () => {
+            startCamera('environment'); // Start with the rear camera by default
+        };
     </script>
 </body>
 </html>
