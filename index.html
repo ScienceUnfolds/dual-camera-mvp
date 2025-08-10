@@ -120,38 +120,21 @@
             captureButton.disabled = true;
 
             try {
-                // First, get all available video devices to find their specific IDs.
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                
-                // Find the front and rear cameras.
-                const rearCameraInfo = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
-                const frontCameraInfo = videoDevices.find(device => device.label.toLowerCase().includes('front'));
+                // Request the rear camera stream first. The 'environment' facingMode is a good fallback.
+                rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                rearCameraVideo.srcObject = rearCameraStream;
+                log('Rear camera is ready. Requesting front camera...', 'info');
 
-                // Request the rear camera stream using its device ID or 'environment' facing mode as a fallback.
-                rearCameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        deviceId: rearCameraInfo ? { exact: rearCameraInfo.deviceId } : undefined,
-                        facingMode: rearCameraInfo ? undefined : 'environment'
-                    }
-                });
+                // Now, wait for the rear camera to be active, then request the front camera stream.
+                frontCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                frontCameraVideo.srcObject = frontCameraStream;
+                log('Front camera is ready!', 'success');
 
-                // Request the front camera stream using its device ID or 'user' facing mode as a fallback.
-                frontCameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        deviceId: frontCameraInfo ? { exact: frontCameraInfo.deviceId } : undefined,
-                        facingMode: frontCameraInfo ? undefined : 'user'
-                    }
-                });
-
-                // Check if both streams were successfully acquired.
                 if (rearCameraStream && frontCameraStream) {
-                    rearCameraVideo.srcObject = rearCameraStream;
-                    frontCameraVideo.srcObject = frontCameraStream;
-                    log('Cameras are ready!', 'success');
+                    log('Both cameras are ready!', 'success');
                     captureButton.disabled = false;
                 } else {
-                    // If we couldn't get both streams, log an error and disable the button.
+                    // This block will be hit if one of the sequential calls fails.
                     log('Failed to access both camera streams. Your device or browser may not support simultaneous dual-camera access.', 'error');
                     captureButton.disabled = true;
                     return;
