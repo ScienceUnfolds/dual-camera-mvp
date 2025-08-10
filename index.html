@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual-Camera MVP</title>
+    <!-- Use Tailwind CSS for a clean and responsive design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 75%; /* 4:3 Aspect Ratio */
+        }
+        .video-container video, .video-container #canvas, .video-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror the video to act as a "selfie" */
+        }
+        #frontCameraVideo {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            width: 150px;
+            height: 112px; /* 4:3 aspect ratio */
+            border: 2px solid white;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4">
+    <div class="max-w-xl w-full bg-white rounded-xl shadow-2xl p-6 md:p-8 space-y-6">
+        <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-800">Dual-Camera MVP</h1>
+        <p class="text-center text-gray-600">A proof-of-concept for capturing video from two cameras simultaneously.</p>
+        
+        <!-- Video and Preview Container -->
+        <div class="video-container rounded-xl overflow-hidden shadow-lg border-4 border-gray-200">
+            <!-- Main Rear Camera View -->
+            <video id="rearCameraVideo" autoplay playsinline muted></video>
+            <!-- Picture-in-Picture Front Camera View -->
+            <video id="frontCameraVideo" autoplay playsinline muted class="rounded-lg shadow-lg"></video>
+            <!-- Hidden Canvas for image processing -->
+            <canvas id="hiddenCanvas" class="hidden"></canvas>
+            <!-- Image tag to display the captured photo -->
+            <img id="capturedImage" class="hidden" alt="Captured dual-camera image">
+        </div>
+
+        <!-- Buttons and User Feedback -->
+        <div class="flex flex-col space-y-4">
+            <button id="captureButton"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-full text-lg shadow-xl transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Capture Photo
+            </button>
+
+            <!-- Status/Message Box -->
+            <div id="messageBox" class="p-4 bg-yellow-100 text-yellow-800 rounded-lg text-sm text-center font-medium transition-all duration-300 ease-in-out">
+                Please allow camera access to begin.
+            </div>
+
+            <!-- Download Button (hidden initially) -->
+            <a id="downloadLink" download="dual_camera_photo.png"
+               class="hidden text-center bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-5 rounded-full text-base shadow-lg transition-transform transform hover:scale-105">
+                Download Photo
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Use a UUID for a more robust unique ID, in case multiple users are running this.
+        const userId = typeof __app_id !== 'undefined' ? __app_id : 'default-user-id-' + Math.random().toString(36).substring(2, 9);
+        const log = (message, type = 'info') => {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.className = `p-4 rounded-lg text-sm text-center font-medium transition-all duration-300 ease-in-out`;
+            
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-800');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-800');
+            } else {
+                messageBox.classList.add('bg-yellow-100', 'text-yellow-800');
+            }
+        };
+
+        const rearCameraVideo = document.getElementById('rearCameraVideo');
+        const frontCameraVideo = document.getElementById('frontCameraVideo');
+        const captureButton = document.getElementById('captureButton');
+        const capturedImage = document.getElementById('capturedImage');
+        const hiddenCanvas = document.getElementById('hiddenCanvas');
+        const downloadLink = document.getElementById('downloadLink');
+
+        let rearCameraStream = null;
+        let frontCameraStream = null;
+
+        // Function to start the video streams from the cameras
+        async function startCameras() {
+            log('Requesting camera access...');
+            captureButton.disabled = true;
+
+            try {
+                // Get all available video devices
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+                if (videoDevices.length < 2) {
+                    log('Could not find two cameras. This app requires a front and rear camera.', 'error');
+                    return;
+                }
+
+                // Identify the front and rear cameras based on the facing mode
+                const rearCamera = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
+                const frontCamera = videoDevices.find(device => device.label.toLowerCase().includes('front'));
+
+                if (!rearCamera || !frontCamera) {
+                    log('Could not identify front and rear cameras. Trying with the first two available devices.', 'error');
+                }
+
+                // Get stream from the rear camera
+                rearCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        deviceId: rearCamera ? { exact: rearCamera.deviceId } : undefined,
+                        facingMode: rearCamera ? undefined : 'environment'
+                    }
+                });
+                rearCameraVideo.srcObject = rearCameraStream;
+
+                // Get stream from the front camera
+                frontCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        deviceId: frontCamera ? { exact: frontCamera.deviceId } : undefined,
+                        facingMode: frontCamera ? undefined : 'user'
+                    }
+                });
+                frontCameraVideo.srcObject = frontCameraStream;
+                
+                log('Cameras are ready!', 'success');
+                captureButton.disabled = false;
+
+            } catch (err) {
+                console.error("Error accessing camera: ", err);
+                log('Failed to access cameras. Please check permissions.', 'error');
+                captureButton.disabled = true;
+            }
+        }
+
+        // Function to stop all camera streams
+        function stopCameras() {
+            if (rearCameraStream) {
+                rearCameraStream.getTracks().forEach(track => track.stop());
+            }
+            if (frontCameraStream) {
+                frontCameraStream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        // Event listener for the capture button
+        captureButton.addEventListener('click', () => {
+            log('Capturing photo...', 'info');
+
+            // Set canvas dimensions to match the main video
+            hiddenCanvas.width = rearCameraVideo.videoWidth;
+            hiddenCanvas.height = rearCameraVideo.videoHeight;
+            const ctx = hiddenCanvas.getContext('2d');
+
+            // Draw the main rear camera video frame onto the canvas
+            // We need to un-mirror it first
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.drawImage(rearCameraVideo, -hiddenCanvas.width, 0, hiddenCanvas.width, hiddenCanvas.height);
+            ctx.restore();
+
+            // Draw the front camera video frame as a picture-in-picture overlay
+            // We also need to un-mirror this one and place it in the corner
+            const pipWidth = rearCameraVideo.videoWidth * 0.3; // Make PiP 30% of main video width
+            const pipHeight = pipWidth * (frontCameraVideo.videoHeight / frontCameraVideo.videoWidth);
+            const pipX = hiddenCanvas.width - pipWidth - (rearCameraVideo.videoWidth * 0.05); // 5% margin
+            const pipY = hiddenCanvas.height - pipHeight - (rearCameraVideo.videoHeight * 0.05); // 5% margin
+            
+            ctx.save();
+            ctx.scale(-1, 1);
+            ctx.drawImage(frontCameraVideo, -pipX - pipWidth, pipY, pipWidth, pipHeight);
+            ctx.restore();
+
+            // Get the data URL of the combined image from the canvas
+            const imageDataURL = hiddenCanvas.toDataURL('image/png');
+
+            // Hide the videos and show the captured image
+            rearCameraVideo.classList.add('hidden');
+            frontCameraVideo.classList.add('hidden');
+            capturedImage.src = imageDataURL;
+            capturedImage.classList.remove('hidden');
+
+            // Update message box and show the download link
+            log('Photo captured!', 'success');
+            downloadLink.href = imageDataURL;
+            downloadLink.classList.remove('hidden');
+
+            // Stop the camera streams after capture to save battery
+            stopCameras();
+            captureButton.disabled = true;
+        });
+
+        // Start cameras on page load
+        window.onload = startCameras;
+    </script>
+</body>
+</html>
