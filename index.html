@@ -120,24 +120,24 @@
             captureButton.disabled = true;
 
             try {
-                // Try to get the rear camera stream first.
-                try {
-                    rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    rearCameraVideo.srcObject = rearCameraStream;
-                    log('Rear camera stream started. Requesting front camera...', 'info');
-                } catch (err) {
-                    console.error("Error starting rear camera: ", err);
-                    log('Failed to start rear camera. Please check permissions.', 'error');
-                }
-                
-                // Then, try to get the front camera stream.
+                // Try to get the front camera stream first.
                 try {
                     frontCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
                     frontCameraVideo.srcObject = frontCameraStream;
-                    log('Front camera stream started.', 'info');
+                    log('Front camera stream started. Requesting rear camera...', 'info');
                 } catch (err) {
                     console.error("Error starting front camera: ", err);
                     log('Failed to start front camera. Please check permissions.', 'error');
+                }
+                
+                // Then, try to get the rear camera stream.
+                try {
+                    rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    rearCameraVideo.srcObject = rearCameraStream;
+                    log('Rear camera stream started.', 'info');
+                } catch (err) {
+                    console.error("Error starting rear camera: ", err);
+                    log('Failed to start rear camera. Please check permissions.', 'error');
                 }
                 
                 // Check if both streams were successfully acquired.
