@@ -62,6 +62,10 @@
                     class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-full text-lg shadow-xl transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
                 Capture Photo
             </button>
+            <button id="restartButton"
+                    class="hidden bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-full text-lg shadow-xl transition-transform transform hover:scale-105">
+                Take Another Photo
+            </button>
 
             <!-- Status/Message Box -->
             <div id="messageBox" class="p-4 bg-yellow-100 text-yellow-800 rounded-lg text-sm text-center font-medium transition-all duration-300 ease-in-out">
@@ -101,6 +105,7 @@
         const rearCameraVideo = document.getElementById('rearCameraVideo');
         const frontCameraVideo = document.getElementById('frontCameraVideo');
         const captureButton = document.getElementById('captureButton');
+        const restartButton = document.getElementById('restartButton');
         const capturedImage = document.getElementById('capturedImage');
         const hiddenCanvas = document.getElementById('hiddenCanvas');
         const downloadLink = document.getElementById('downloadLink');
@@ -115,46 +120,24 @@
             captureButton.disabled = true;
 
             try {
-                // Get all available video devices (cameras) on the user's device.
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-
-                // Check if we found at least two cameras.
-                if (videoDevices.length < 2) {
-                    log('Could not find two cameras. This app requires a front and rear camera.', 'error');
-                    return;
-                }
-
-                let rearCamera, frontCamera;
+                // Attempt to get the rear camera stream first by specifying its facing mode.
+                rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 
-                // Attempt to find cameras by label first, as this is the most reliable way when it works.
-                rearCamera = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
-                frontCamera = videoDevices.find(device => device.label.toLowerCase().includes('front'));
-                
-                // If we couldn't find them by label, fall back to a generic approach.
-                // The browser will typically default to one facing "environment" (rear) and one "user" (front).
-                if (!rearCamera || !frontCamera) {
-                    log('Could not identify cameras by label. Falling back to generic facing modes.', 'info');
-                    rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    frontCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                // Then attempt to get the front camera stream by specifying its facing mode.
+                frontCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+
+                // If both streams were successfully acquired, proceed with setting up the app.
+                if (rearCameraStream && frontCameraStream) {
+                    rearCameraVideo.srcObject = rearCameraStream;
+                    frontCameraVideo.srcObject = frontCameraStream;
+                    log('Cameras are ready!', 'success');
+                    captureButton.disabled = false;
                 } else {
-                    // If we found them by label, use the specific device IDs.
-                    rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: rearCamera.deviceId } } });
-                    frontCameraStream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: frontCamera.deviceId } } });
-                }
-
-                // If either stream failed to start, handle the error.
-                if (!rearCameraStream || !frontCameraStream) {
-                    log('Failed to access both camera streams.', 'error');
+                    // If we couldn't get both streams, log an error and disable the button.
+                    log('Failed to access both camera streams. Your device or browser may not support simultaneous dual-camera access.', 'error');
+                    captureButton.disabled = true;
                     return;
                 }
-                
-                // Assign the streams to the video elements.
-                rearCameraVideo.srcObject = rearCameraStream;
-                frontCameraVideo.srcObject = frontCameraStream;
-                
-                log('Cameras are ready!', 'success');
-                captureButton.disabled = false;
 
             } catch (err) {
                 // Log any errors if camera access is denied or fails.
@@ -174,9 +157,25 @@
             }
         }
 
-        // Event listener for the capture button. This is where the magic happens.
+        // Function to reset the app to its initial state for a new photo.
+        function restartApp() {
+            // Hide the captured image and download link
+            capturedImage.classList.add('hidden');
+            downloadLink.classList.add('hidden');
+
+            // Show the video elements
+            rearCameraVideo.classList.remove('hidden');
+            frontCameraVideo.classList.remove('hidden');
+
+            // Restart the camera streams
+            startCameras();
+        }
+
+        // Event listener for the capture button.
         captureButton.addEventListener('click', () => {
             log('Capturing photo...', 'info');
+            captureButton.classList.add('hidden'); // Hide the capture button
+            restartButton.classList.remove('hidden'); // Show the restart button
 
             // Set canvas dimensions to match the main rear camera video.
             hiddenCanvas.width = rearCameraVideo.videoWidth;
@@ -184,15 +183,12 @@
             const ctx = hiddenCanvas.getContext('2d');
 
             // Draw the main rear camera video frame onto the canvas.
-            // We use ctx.scale(-1, 1) to un-mirror the image, as video streams for
-            // user-facing cameras are often mirrored by default.
             ctx.save();
             ctx.scale(-1, 1);
             ctx.drawImage(rearCameraVideo, -hiddenCanvas.width, 0, hiddenCanvas.width, hiddenCanvas.height);
             ctx.restore();
 
             // Draw the front camera video frame as a picture-in-picture overlay.
-            // Calculate the size and position of the smaller image.
             const pipWidth = rearCameraVideo.videoWidth * 0.3; // Make PiP 30% of main video width.
             const pipHeight = pipWidth * (frontCameraVideo.videoHeight / frontCameraVideo.videoWidth);
             const pipX = hiddenCanvas.width - pipWidth - (rearCameraVideo.videoWidth * 0.05); // 5% margin from the right.
@@ -200,7 +196,6 @@
             
             ctx.save();
             ctx.scale(-1, 1);
-            // Draw the smaller front-camera image on top.
             ctx.drawImage(frontCameraVideo, -pipX - pipWidth, pipY, pipWidth, pipHeight);
             ctx.restore();
 
@@ -220,7 +215,13 @@
 
             // Stop the camera streams after capture.
             stopCameras();
-            captureButton.disabled = true;
+        });
+
+        // Event listener for the restart button.
+        restartButton.addEventListener('click', () => {
+            restartApp();
+            captureButton.classList.remove('hidden');
+            restartButton.classList.add('hidden');
         });
 
         // The 'window.onload' event ensures the cameras start automatically when the page loads.
