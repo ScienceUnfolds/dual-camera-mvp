@@ -120,13 +120,31 @@
             captureButton.disabled = true;
 
             try {
-                // Attempt to get the rear camera stream first by specifying its facing mode.
-                rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                // First, get all available video devices to find their specific IDs.
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
                 
-                // Then attempt to get the front camera stream by specifying its facing mode.
-                frontCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                // Find the front and rear cameras.
+                const rearCameraInfo = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
+                const frontCameraInfo = videoDevices.find(device => device.label.toLowerCase().includes('front'));
 
-                // If both streams were successfully acquired, proceed with setting up the app.
+                // Request the rear camera stream using its device ID or 'environment' facing mode as a fallback.
+                rearCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        deviceId: rearCameraInfo ? { exact: rearCameraInfo.deviceId } : undefined,
+                        facingMode: rearCameraInfo ? undefined : 'environment'
+                    }
+                });
+
+                // Request the front camera stream using its device ID or 'user' facing mode as a fallback.
+                frontCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        deviceId: frontCameraInfo ? { exact: frontCameraInfo.deviceId } : undefined,
+                        facingMode: frontCameraInfo ? undefined : 'user'
+                    }
+                });
+
+                // Check if both streams were successfully acquired.
                 if (rearCameraStream && frontCameraStream) {
                     rearCameraVideo.srcObject = rearCameraStream;
                     frontCameraVideo.srcObject = frontCameraStream;
@@ -162,6 +180,9 @@
             // Hide the captured image and download link
             capturedImage.classList.add('hidden');
             downloadLink.classList.add('hidden');
+            // Hide the restart button and show the capture button
+            restartButton.classList.add('hidden');
+            captureButton.classList.remove('hidden');
 
             // Show the video elements
             rearCameraVideo.classList.remove('hidden');
@@ -220,8 +241,6 @@
         // Event listener for the restart button.
         restartButton.addEventListener('click', () => {
             restartApp();
-            captureButton.classList.remove('hidden');
-            restartButton.classList.add('hidden');
         });
 
         // The 'window.onload' event ensures the cameras start automatically when the page loads.
