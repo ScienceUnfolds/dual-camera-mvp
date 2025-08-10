@@ -120,28 +120,41 @@
             captureButton.disabled = true;
 
             try {
-                // Request the rear camera stream first. The 'environment' facingMode is a good fallback.
-                rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                rearCameraVideo.srcObject = rearCameraStream;
-                log('Rear camera is ready. Requesting front camera...', 'info');
+                // First, get a list of all video devices to identify them by ID.
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
 
-                // Now, wait for the rear camera to be active, then request the front camera stream.
-                frontCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                frontCameraVideo.srcObject = frontCameraStream;
-                log('Front camera is ready!', 'success');
+                // Find the rear and front cameras based on facingMode.
+                const rearCameraInfo = videoDevices.find(device => device.label.toLowerCase().includes('back') || device.label.toLowerCase().includes('rear'));
+                const frontCameraInfo = videoDevices.find(device => device.label.toLowerCase().includes('front'));
+
+                if (!rearCameraInfo || !frontCameraInfo) {
+                    log('Could not find both front and rear cameras. Your device may not support this feature.', 'error');
+                    return;
+                }
+
+                // Request the rear camera stream by its deviceId
+                rearCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: rearCameraInfo.deviceId } }
+                });
+                
+                // Request the front camera stream by its deviceId
+                frontCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: frontCameraInfo.deviceId } }
+                });
 
                 if (rearCameraStream && frontCameraStream) {
+                    rearCameraVideo.srcObject = rearCameraStream;
+                    frontCameraVideo.srcObject = frontCameraStream;
                     log('Both cameras are ready!', 'success');
                     captureButton.disabled = false;
                 } else {
-                    // This block will be hit if one of the sequential calls fails.
-                    log('Failed to access both camera streams. Your device or browser may not support simultaneous dual-camera access.', 'error');
+                    log('Failed to access both camera streams. Your device may not support this feature.', 'error');
                     captureButton.disabled = true;
                     return;
                 }
 
             } catch (err) {
-                // Log any errors if camera access is denied or fails.
                 console.error("Error accessing camera: ", err);
                 log('Failed to access cameras. Please check permissions.', 'error');
                 captureButton.disabled = true;
@@ -160,64 +173,53 @@
 
         // Function to reset the app to its initial state for a new photo.
         function restartApp() {
-            // Hide the captured image and download link
             capturedImage.classList.add('hidden');
             downloadLink.classList.add('hidden');
-            // Hide the restart button and show the capture button
             restartButton.classList.add('hidden');
             captureButton.classList.remove('hidden');
 
-            // Show the video elements
             rearCameraVideo.classList.remove('hidden');
             frontCameraVideo.classList.remove('hidden');
 
-            // Restart the camera streams
             startCameras();
         }
 
         // Event listener for the capture button.
         captureButton.addEventListener('click', () => {
             log('Capturing photo...', 'info');
-            captureButton.classList.add('hidden'); // Hide the capture button
-            restartButton.classList.remove('hidden'); // Show the restart button
+            captureButton.classList.add('hidden'); 
+            restartButton.classList.remove('hidden'); 
 
-            // Set canvas dimensions to match the main rear camera video.
             hiddenCanvas.width = rearCameraVideo.videoWidth;
             hiddenCanvas.height = rearCameraVideo.videoHeight;
             const ctx = hiddenCanvas.getContext('2d');
 
-            // Draw the main rear camera video frame onto the canvas.
             ctx.save();
             ctx.scale(-1, 1);
             ctx.drawImage(rearCameraVideo, -hiddenCanvas.width, 0, hiddenCanvas.width, hiddenCanvas.height);
             ctx.restore();
 
-            // Draw the front camera video frame as a picture-in-picture overlay.
-            const pipWidth = rearCameraVideo.videoWidth * 0.3; // Make PiP 30% of main video width.
+            const pipWidth = rearCameraVideo.videoWidth * 0.3; 
             const pipHeight = pipWidth * (frontCameraVideo.videoHeight / frontCameraVideo.videoWidth);
-            const pipX = hiddenCanvas.width - pipWidth - (rearCameraVideo.videoWidth * 0.05); // 5% margin from the right.
-            const pipY = hiddenCanvas.height - pipHeight - (rearCameraVideo.videoHeight * 0.05); // 5% margin from the bottom.
+            const pipX = hiddenCanvas.width - pipWidth - (rearCameraVideo.videoWidth * 0.05);
+            const pipY = hiddenCanvas.height - pipHeight - (rearCameraVideo.videoHeight * 0.05); 
             
             ctx.save();
             ctx.scale(-1, 1);
             ctx.drawImage(frontCameraVideo, -pipX - pipWidth, pipY, pipWidth, pipHeight);
             ctx.restore();
 
-            // Get the final combined image as a data URL.
             const imageDataURL = hiddenCanvas.toDataURL('image/png');
 
-            // Hide the videos and display the captured image.
             rearCameraVideo.classList.add('hidden');
             frontCameraVideo.classList.add('hidden');
             capturedImage.src = imageDataURL;
             capturedImage.classList.remove('hidden');
 
-            // Update the message box and show the download link.
             log('Photo captured!', 'success');
             downloadLink.href = imageDataURL;
             downloadLink.classList.remove('hidden');
 
-            // Stop the camera streams after capture.
             stopCameras();
         });
 
