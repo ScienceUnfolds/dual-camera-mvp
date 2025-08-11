@@ -1,217 +1,162 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dual-Camera MVP</title>
-    <!-- Use Tailwind CSS for a clean and responsive design -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-        }
-        .video-container {
-            position: relative;
-            width: 100%;
-            padding-bottom: 75%; /* 4:3 Aspect Ratio */
-        }
-        .video-container video, .video-container #canvas, .video-container img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        #frontCameraVideo {
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-            width: 150px;
-            height: 112px; /* 4:3 aspect ratio */
-            border: 2px solid white;
-            z-index: 10;
-            transform: scaleX(-1); /* Mirror the front camera view */
-        }
-    </style>
-</head>
-<body class="bg-gray-100 flex flex-col items-center justify-start min-h-screen p-4">
-    <div class="max-w-xl w-full bg-white rounded-xl shadow-2xl p-6 md:p-8 space-y-6">
-        <h1 class="text-3xl md:text-4xl font-bold text-center text-gray-800">Dual-Camera MVP</h1>
-        <p class="text-center text-gray-600">A proof-of-concept for capturing photos with front and rear cameras.</p>
-        
-        <!-- Video and Preview Container -->
-        <div class="video-container rounded-xl overflow-hidden shadow-lg border-4 border-gray-200">
-            <!-- Main Rear Camera View -->
-            <video id="rearCameraVideo" autoplay playsinline muted></video>
-            <!-- Picture-in-Picture Front Camera View -->
-            <video id="frontCameraVideo" autoplay playsinline muted class="rounded-lg shadow-lg"></video>
-            <!-- Hidden Canvas for image processing -->
-            <canvas id="hiddenCanvas" class="hidden"></canvas>
-            <!-- Image tag to display the captured photo -->
-            <img id="capturedImage" class="hidden" alt="Captured dual-camera image">
-        </div>
+import React, { useState } from 'react';
+import { Calendar, Clock, MapPin, Search, Globe } from 'lucide-react';
 
-        <!-- Buttons and User Feedback -->
-        <div class="flex flex-col space-y-4">
-            <button id="captureButton"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-full text-lg shadow-xl transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                Capture Photo
-            </button>
-            <button id="restartButton"
-                    class="hidden bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-full text-lg shadow-xl transition-transform transform hover:scale-105">
-                Take Another Photo
-            </button>
+const App = () => {
+  // State to hold the form data
+  const [birthDate, setBirthDate] = useState('');
+  const [birthTime, setBirthTime] = useState('');
+  const [birthLocation, setBirthLocation] = useState('');
+  const [astrologyDetails, setAstrologyDetails] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  // New state for language selection, defaulting to English
+  const [language, setLanguage] = useState('en');
 
-            <!-- Status/Message Box -->
-            <div id="messageBox" class="p-4 bg-yellow-100 text-yellow-800 rounded-lg text-sm text-center font-medium transition-all duration-300 ease-in-out">
-                Please allow camera access to begin.
+  // Function to handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setAstrologyDetails(null);
+
+    // This is where you would call an external astrology API.
+    // The API would take birthDate, birthTime, birthLocation, and language as inputs.
+    console.log('Fetching astrological details for:', { birthDate, birthTime, birthLocation, language });
+
+    try {
+      // Simulate an API call with a delay.
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // This is mock data that changes based on the selected language.
+      // In a real app, the API would return the correct text based on the `language` parameter.
+      const mockDetails = language === 'ne'
+        ? {
+            sunSign: 'कन्या राशि',
+            moonSign: 'वृश्चिक राशि',
+            ascendant: 'धनु राशि',
+            houseDetails: 'तपाईको धनु राशिमा रहेको लग्नले तपाईलाई स्वतन्त्रता र साहसको लागि बलियो इच्छा दिन्छ...',
+            planetPositions: 'सूर्य कन्या राशिमा ($20^\circ$), चन्द्रमा वृश्चिक राशिमा ($5^\circ$), बुध तुला राशिमा ($12^\circ$)...',
+          }
+        : {
+            sunSign: 'Virgo',
+            moonSign: 'Scorpio',
+            ascendant: 'Sagittarius',
+            houseDetails: 'Your Ascendant in Sagittarius gives you a strong desire for freedom and adventure...',
+            planetPositions: 'Sun in Virgo ($20^\circ$), Moon in Scorpio ($5^\circ$), Mercury in Libra ($12^\circ$)...',
+          };
+
+      setAstrologyDetails(mockDetails);
+
+    } catch (error) {
+      console.error('Error fetching astrology details:', error);
+      // You would handle the error gracefully here, perhaps by displaying an error message to the user.
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 font-sans">
+      <div className="bg-gray-800 shadow-2xl rounded-xl p-8 max-w-lg w-full transform transition-all duration-300 hover:scale-105">
+        <h1 className="text-4xl font-bold text-center mb-6 text-yellow-300">Astrology Tool</h1>
+        <p className="text-center text-gray-400 mb-8">Enter your birth details to discover your astrological chart.</p>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="relative">
+            <label htmlFor="language" className="block text-sm font-medium text-gray-400 mb-2">Language</label>
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size={20} />
+              <select
+                id="language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+              >
+                <option value="en">English</option>
+                <option value="ne">नेपाली (Nepali)</option>
+              </select>
             </div>
+          </div>
+          <div className="relative">
+            <label htmlFor="birth-date" className="block text-sm font-medium text-gray-400 mb-2">Date of Birth</label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size={20} />
+              <input
+                type="date"
+                id="birth-date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                required
+                className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+              />
+            </div>
+          </div>
+          
+          <div className="relative">
+            <label htmlFor="birth-time" className="block text-sm font-medium text-gray-400 mb-2">Time of Birth</label>
+            <div className="relative">
+              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size={20} />
+              <input
+                type="time"
+                id="birth-time"
+                value={birthTime}
+                onChange={(e) => setBirthTime(e.target.value)}
+                required
+                className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+              />
+            </div>
+          </div>
+          
+          <div className="relative">
+            <label htmlFor="birth-location" className="block text-sm font-medium text-gray-400 mb-2">City/Location</label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size={20} />
+              <input
+                type="text"
+                id="birth-location"
+                placeholder="e.g., New York, NY"
+                value={birthLocation}
+                onChange={(e) => setBirthLocation(e.target.value)}
+                required
+                className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+              />
+            </div>
+          </div>
+          
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center space-x-2 py-3 px-6 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-md hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <svg className="animate-spin h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <>
+                <Search size={20} />
+                <span>{language === 'ne' ? 'मेरो ज्योतिष विवरण प्राप्त गर्नुहोस्' : 'Get My Astrology Details'}</span>
+              </>
+            )}
+          </button>
+        </form>
 
-            <!-- Download Button (hidden initially) -->
-            <a id="downloadLink" download="dual_camera_photo.png"
-               class="hidden text-center bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-5 rounded-full text-base shadow-lg transition-transform transform hover:scale-105">
-                Download Photo
-            </a>
-        </div>
+        {astrologyDetails && (
+          <div className="mt-8 p-6 bg-gray-900 rounded-xl shadow-inner border border-gray-700">
+            <h2 className="text-2xl font-bold mb-4 text-center text-yellow-300">
+              {language === 'ne' ? 'तपाईको ज्योतिषीय प्रोफाइल' : 'Your Astrological Profile'}
+            </h2>
+            <div className="space-y-4 text-gray-300">
+              <p><strong>{language === 'ne' ? 'सूर्य राशि:' : 'Sun Sign:'}</strong> <span className="font-semibold text-yellow-200">{astrologyDetails.sunSign}</span></p>
+              <p><strong>{language === 'ne' ? 'चन्द्र राशि:' : 'Moon Sign:'}</strong> <span className="font-semibold text-yellow-200">{astrologyDetails.moonSign}</span></p>
+              <p><strong>{language === 'ne' ? 'लग्न:' : 'Ascendant:'}</strong> <span className="font-semibold text-yellow-200">{astrologyDetails.ascendant}</span></p>
+              <p><strong>{language === 'ne' ? 'घरको विवरण:' : 'House Details:'}</strong> {astrologyDetails.houseDetails}</p>
+              <p><strong>{language === 'ne' ? 'ग्रहको स्थिति:' : 'Planet Positions:'}</strong> {astrologyDetails.planetPositions}</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
+  );
+};
 
-    <script>
-        // Use a UUID for a more robust unique ID, in case multiple users are running this.
-        // This is a default to prevent errors if the app ID isn't available.
-        const userId = typeof __app_id !== 'undefined' ? __app_id : 'default-user-id-' + Math.random().toString(36).substring(2, 9);
-        
-        // This function is for displaying messages and status updates to the user.
-        // It takes a message and a type (e.g., 'info', 'success', 'error') to style the box.
-        const log = (message, type = 'info') => {
-            const messageBox = document.getElementById('messageBox');
-            messageBox.textContent = message;
-            messageBox.className = `p-4 rounded-lg text-sm text-center font-medium transition-all duration-300 ease-in-out`;
-            
-            if (type === 'success') {
-                messageBox.classList.add('bg-green-100', 'text-green-800');
-            } else if (type === 'error') {
-                messageBox.classList.add('bg-red-100', 'text-red-800');
-            } else {
-                messageBox.classList.add('bg-yellow-100', 'text-yellow-800');
-            }
-        };
-
-        // Get references to all the necessary HTML elements.
-        const rearCameraVideo = document.getElementById('rearCameraVideo');
-        const frontCameraVideo = document.getElementById('frontCameraVideo');
-        const captureButton = document.getElementById('captureButton');
-        const restartButton = document.getElementById('restartButton');
-        const capturedImage = document.getElementById('capturedImage');
-        const hiddenCanvas = document.getElementById('hiddenCanvas');
-        const downloadLink = document.getElementById('downloadLink');
-
-        // Variables to hold the camera stream objects.
-        let rearCameraStream = null;
-        let frontCameraStream = null;
-
-        // Function to stop all camera streams to save battery and resources.
-        function stopCameras() {
-            if (rearCameraStream) {
-                rearCameraStream.getTracks().forEach(track => track.stop());
-            }
-            if (frontCameraStream) {
-                frontCameraStream.getTracks().forEach(track => track.stop());
-            }
-        }
-
-        // Function to start the video streams from the cameras sequentially with a delay.
-        async function startCameras() {
-            log('Requesting back camera access...');
-            captureButton.disabled = true;
-            stopCameras();
-
-            try {
-                // First, try to get the rear camera stream.
-                rearCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                rearCameraVideo.srcObject = rearCameraStream;
-                log('Back camera is ready. Requesting front camera...', 'info');
-
-                // Wait for a small moment to let the browser process the first stream.
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                // Now, try to get the front camera stream.
-                frontCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                frontCameraVideo.srcObject = frontCameraStream;
-                
-                log('Front camera is ready!', 'success');
-                captureButton.disabled = false;
-
-            } catch (err) {
-                console.error("Error accessing camera: ", err);
-                log('Failed to access one or both camera streams. Please check permissions.', 'error');
-                captureButton.disabled = true;
-            }
-        }
-
-        // Function to reset the app to its initial state for a new photo.
-        function restartApp() {
-            capturedImage.classList.add('hidden');
-            downloadLink.classList.add('hidden');
-            restartButton.classList.add('hidden');
-            captureButton.classList.remove('hidden');
-
-            rearCameraVideo.classList.remove('hidden');
-            frontCameraVideo.classList.remove('hidden');
-
-            startCameras();
-        }
-
-        // Event listener for the capture button.
-        captureButton.addEventListener('click', () => {
-            log('Capturing photo...', 'info');
-            captureButton.classList.add('hidden'); 
-            restartButton.classList.remove('hidden'); 
-
-            hiddenCanvas.width = rearCameraVideo.videoWidth;
-            hiddenCanvas.height = rearCameraVideo.videoHeight;
-            const ctx = hiddenCanvas.getContext('2d');
-
-            // Draw the main rear camera video frame onto the canvas.
-            ctx.drawImage(rearCameraVideo, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
-
-            // Draw the front camera video frame as a picture-in-picture overlay.
-            const pipWidth = rearCameraVideo.videoWidth * 0.3; // Make PiP 30% of main video width.
-            const pipHeight = pipWidth * (frontCameraVideo.videoHeight / frontCameraVideo.videoWidth);
-            const pipX = hiddenCanvas.width - pipWidth - (rearCameraVideo.videoWidth * 0.05); // 5% margin from the right.
-            const pipY = hiddenCanvas.height - pipHeight - (rearCameraVideo.videoHeight * 0.05); // 5% margin from the bottom.
-            
-            // Mirror the front camera image on the canvas.
-            ctx.save();
-            ctx.scale(-1, 1);
-            ctx.drawImage(frontCameraVideo, -pipX - pipWidth, pipY, pipWidth, pipHeight);
-            ctx.restore();
-
-            const imageDataURL = hiddenCanvas.toDataURL('image/png');
-
-            rearCameraVideo.classList.add('hidden');
-            frontCameraVideo.classList.add('hidden');
-            capturedImage.src = imageDataURL;
-            capturedImage.classList.remove('hidden');
-
-            log('Photo captured!', 'success');
-            downloadLink.href = imageDataURL;
-            downloadLink.classList.remove('hidden');
-
-            stopCameras();
-        });
-
-        // Event listener for the restart button.
-        restartButton.addEventListener('click', () => {
-            restartApp();
-        });
-
-        // The 'window.onload' event ensures the cameras start automatically when the page loads.
-        window.onload = startCameras;
-    </script>
-</body>
-</html>
+export default App;
