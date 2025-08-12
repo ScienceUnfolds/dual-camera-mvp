@@ -200,6 +200,31 @@
         // When it changes, the updateButtonText function is called.
         languageSelect.addEventListener('change', updateButtonText);
         updateButtonText(); // Call the function once when the page loads to set the initial text.
+        
+        /**
+         * Extracts a valid JSON string from a potentially malformed API response.
+         * The model sometimes wraps the JSON in markdown code blocks or includes
+         * conversational text. This function cleans that up.
+         * @param {string} responseText The raw text response from the API.
+         * @returns {string|null} The cleaned JSON string or null if not found.
+         */
+        const extractJsonFromResponse = (responseText) => {
+            // Regex to find a block of text that looks like a JSON object.
+            // This handles cases with and without markdown code blocks.
+            const jsonRegex = /```json\s*([\s\S]*?)\s*```|({[\s\S]*})/;
+            const match = responseText.match(jsonRegex);
+
+            if (match && match[1]) {
+                return match[1]; // Return content inside the ```json block
+            } else if (match && match[2]) {
+                const trimmed = match[2].trim();
+                // A quick check to see if it starts with { and ends with }
+                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                    return trimmed;
+                }
+            }
+            return null; // No valid JSON found
+        };
 
         /**
          * Fetches data from the API with a retry mechanism and exponential backoff.
@@ -254,7 +279,7 @@
             // Clear the button text.
             buttonText.textContent = '';
             // Insert the SVG code for the loading spinner into the button.
-            submitBtn.innerHTML = '<svg class="animate-spin-fast h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            submitBtn.innerHTML = '<svg class="animate-spin-fast h-5 w-5 text-gray-900" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
             // Hide the results container from the previous submission, if any.
             resultsContainer.classList.add('hidden');
 
@@ -306,13 +331,36 @@
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
+                        const rawText = result.candidates[0].content.parts[0].text;
+                        let details;
                         try {
-                            const details = JSON.parse(result.candidates[0].content.parts[0].text);
-                            displayResults(details, language);
+                            // Primary attempt: try to parse the response directly
+                            details = JSON.parse(rawText);
                         } catch (jsonError) {
-                            console.error('Failed to parse JSON from API response:', jsonError, result.candidates[0].content.parts[0].text);
+                            console.warn('Direct JSON parsing failed. Attempting fallback method...');
+                            // Fallback attempt: try to extract JSON from the text
+                            const jsonString = extractJsonFromResponse(rawText);
+                            if (jsonString) {
+                                try {
+                                    details = JSON.parse(jsonString);
+                                } catch (fallbackJsonError) {
+                                    // Fallback failed as well
+                                    console.error('Fallback JSON parsing failed:', fallbackJsonError, rawText);
+                                    details = null;
+                                }
+                            } else {
+                                // No JSON found at all
+                                console.error('API response did not contain a valid JSON object.', rawText);
+                                details = null;
+                            }
+                        }
+
+                        if (details) {
+                            displayResults(details, language);
+                        } else {
+                            // Both parsing methods failed, show a detailed error
                             resultsContainer.classList.remove('hidden');
-                            resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I received an invalid response from the server. Please try again. The raw response was: <pre>${result.candidates[0].content.parts[0].text}</pre></p>`;
+                            resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. The server responded with an invalid or empty result. Please try again. Raw response for debugging: <pre class="mt-4 p-4 bg-gray-800 rounded-lg text-sm text-gray-300 whitespace-pre-wrap">${rawText}</pre></p>`;
                         }
                 } else {
                     console.error('API response structure is unexpected or content is missing', result);
