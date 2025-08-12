@@ -66,6 +66,10 @@
                     >
                         <option value="en">English</option>
                         <option value="ne">नेपाली (Nepali)</option>
+                        <option value="hi">हिंदी (Hindi)</option>
+                        <option value="ta">தமிழ் (Tamil)</option>
+                        <option value="bn">বাংলা (Bengali)</option>
+                        <option value="new">नेवारी (Newari)</option>
                     </select>
                 </div>
             </div>
@@ -177,8 +181,11 @@
                 ascendant: 'Ascendant:',
                 houseDetails: 'House Details:',
                 planetPositions: 'Planet Positions:',
+                dailyHoroscope: 'Daily Horoscope:',
                 monthlyRashifal: 'Monthly Rashifal (Horoscope):',
-                annualRashifal: 'Annual Rashifal (Horoscope):'
+                annualRashifal: 'Annual Rashifal (Horoscope):',
+                familySituation: 'Family Situation:',
+                carefulAbout: 'Be Careful About:'
             },
             ne: {
                 button: 'मेरो ज्योतिष विवरण प्राप्त गर्नुहोस्',
@@ -189,8 +196,71 @@
                 ascendant: 'लग्न:',
                 houseDetails: 'घरको विवरण:',
                 planetPositions: 'ग्रहको स्थिति:',
+                dailyHoroscope: 'दैनिक राशिफल:',
                 monthlyRashifal: 'मासिक राशिफल:',
-                annualRashifal: 'वार्षिक राशिफल:'
+                annualRashifal: 'वार्षिक राशिफल:',
+                familySituation: 'पारिवारिक स्थिति:',
+                carefulAbout: 'यस बारे सावधान रहनुहोस्:'
+            },
+            hi: {
+                button: 'मेरी ज्योतिष विवरण प्राप्त करें',
+                title: 'आपकी ज्योतिषीय प्रोफाइल',
+                hello: 'नमस्ते',
+                sunSign: 'सूर्य राशि:',
+                moonSign: 'चंद्र राशि:',
+                ascendant: 'लग्न:',
+                houseDetails: 'घर का विवरण:',
+                planetPositions: 'ग्रहों की स्थिति:',
+                dailyHoroscope: 'दैनिक राशिफल:',
+                monthlyRashifal: 'मासिक राशिफल:',
+                annualRashifal: 'वार्षिक राशिफल:',
+                familySituation: 'पारिवारिक स्थिति:',
+                carefulAbout: 'इनके बारे में सावधान रहें:'
+            },
+            ta: {
+                button: 'எனது ஜோதிட விவரங்களைப் பெறுங்கள்',
+                title: 'உங்கள் ஜோதிட விவரம்',
+                hello: 'வணக்கம்',
+                sunSign: 'சூரிய ராசி:',
+                moonSign: 'சந்திர ராசி:',
+                ascendant: 'லக்னம்:',
+                houseDetails: 'வீட்டு விவரங்கள்:',
+                planetPositions: 'கிரக நிலைகள்:',
+                dailyHoroscope: 'தினசரி ராசி பலன்:',
+                monthlyRashifal: 'மாதாந்திர ராசி பலன்:',
+                annualRashifal: 'வருடாந்திர ராசி பலன்:',
+                familySituation: 'குடும்ப நிலை:',
+                carefulAbout: 'இந்த விஷயங்களில் கவனமாக இருங்கள்:'
+            },
+            bn: {
+                button: 'আমার জ্যোতিষ বিবরণ পান',
+                title: 'আপনার জ্যোতিষশাস্ত্রীয় প্রোফাইল',
+                hello: 'নমস্কার',
+                sunSign: 'সূর্য রাশি:',
+                moonSign: 'চন্দ্র রাশি:',
+                ascendant: 'লগ্ন:',
+                houseDetails: 'ঘরের বিবরণ:',
+                planetPositions: 'গ্রহের অবস্থান:',
+                dailyHoroscope: 'দৈনিক রাশিফল:',
+                monthlyRashifal: 'মাসিক রাশিফল:',
+                annualRashifal: 'বার্ষিক রাশিফল:',
+                familySituation: 'পারিবারিক পরিস্থিতি:',
+                carefulAbout: 'এই বিষয়গুলো সম্পর্কে সতর্ক থাকুন:'
+            },
+            new: { // Newari language
+                button: 'जिगु ज्योतिष विवरण काये',
+                title: 'छिगु ज्योतिषीय विवरण',
+                hello: 'ज्वजलपा',
+                sunSign: 'सूर्य राशि:',
+                moonSign: 'चन्द्र राशि:',
+                ascendant: 'लग्न:',
+                houseDetails: 'छेँया विवरण:',
+                planetPositions: 'ग्रहया स्थिति:',
+                dailyHoroscope: 'न्हिछिनिया राशिफल:',
+                monthlyRashifal: 'लागिया राशिफल:',
+                annualRashifal: 'दँया राशिफल:',
+                familySituation: 'छेँज्या स्थिति:',
+                carefulAbout: 'थ्व खँ ल्वहँ ल्वाके:'
             }
         };
         
@@ -308,7 +378,7 @@
                 const t = translations[language];
                 // The prompt now explicitly asks for a JSON object and nothing else,
                 // so we don't need the generationConfig.responseMimeType property.
-                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.`;
+                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly. Also include a daily horoscope, a section on family situation, and a section on things to be careful about.`;
                 
                 const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
                 const payload = {
@@ -325,8 +395,11 @@
                                 ascendant: { type: "STRING" },
                                 houseDetails: { type: "STRING" },
                                 planetPositions: { type: "STRING" },
+                                dailyHoroscope: { type: "STRING" },
                                 monthlyRashifal: { type: "STRING" },
-                                annualRashifal: { type: "STRING" }
+                                annualRashifal: { type: "STRING" },
+                                familySituation: { type: "STRING" },
+                                carefulAbout: { type: "STRING" }
                             }
                         }
                     }
@@ -421,10 +494,17 @@
                     <p><strong>${t.houseDetails}</strong> ${details.houseDetails}</p>
                     <p><strong>${t.planetPositions}</strong> ${details.planetPositions}</p>
                     <hr class="border-gray-700 my-4" />
+                    <h3 class="text-xl font-bold text-yellow-300">${t.dailyHoroscope}</h3>
+                    <p>${details.dailyHoroscope}</p>
+                    <hr class="border-gray-700 my-4" />
                     <h3 class="text-xl font-bold text-yellow-300">${t.monthlyRashifal}</h3>
                     <p>${details.monthlyRashifal}</p>
                     <h3 class="text-xl font-bold text-yellow-300">${t.annualRashifal}</h3>
                     <p>${details.annualRashifal}</p>
+                    <h3 class="text-xl font-bold text-yellow-300">${t.familySituation}</h3>
+                    <p>${details.familySituation}</p>
+                    <h3 class="text-xl font-bold text-yellow-300">${t.carefulAbout}</h3>
+                    <p>${details.carefulAbout}</p>
                 </div>
             `;
         }
