@@ -7,12 +7,11 @@
     <!--
         This script tag loads Tailwind CSS, a utility-first CSS framework.
         We use it for all the styling (colors, layout, spacing, etc.).
-        This is a common way to quickly add modern styling to a web page.
     -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!--
         This script loads Lucide Icons, which are a lightweight and modern icon set.
-        We use icons for the globe, calendar, clock, and map-pin to make the form more visually appealing.
+        We use icons for the form fields to make the interface more visually appealing.
     -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -237,7 +236,6 @@
         lucide.createIcons();
 
         // Fetches all the necessary HTML elements using their unique IDs.
-        // This makes it easy to manipulate them later in the code.
         const form = document.getElementById('astrology-form');
         const languageSelect = document.getElementById('language');
         const personNameInput = document.getElementById('person-name');
@@ -255,16 +253,20 @@
         const monthlyAnnualTitle = document.getElementById('monthly-annual-title');
         const familyRelationshipTitle = document.getElementById('family-relationship-title');
         const ageWiseTitle = document.getElementById('age-wise-title');
+        
+        const dailyLoading = document.getElementById('daily-horoscope-loading');
+        const monthlyAnnualLoading = document.getElementById('monthly-annual-loading');
+        const familyLoading = document.getElementById('family-relationship-loading');
+        const ageWiseLoading = document.getElementById('age-wise-loading');
 
         // This object stores all the text strings for the app in different languages.
-        // This makes the app easily translatable by simply adding more language keys.
         const translations = {
             en: {
                 button: 'Get My Astrology Details',
                 title: 'Your Astrological Profile',
                 hello: 'Hello',
                 sunSign: 'Sun Sign:',
-                moonSign: 'Moon Sign (Rashi):', // Corrected to be more specific
+                moonSign: 'Moon Sign (Rashi):',
                 ascendant: 'Ascendant:',
                 houseDetails: 'House Details:',
                 planetPositions: 'Planet Positions:',
@@ -444,10 +446,18 @@
         // This object acts as a cache to store fetched data, so we don't re-fetch
         // the same information multiple times.
         const dataCache = {
-            daily: null,
-            monthlyAnnual: null,
-            family: null,
-            ageWise: null
+            'daily-horoscope': null,
+            'monthly-annual': null,
+            'family-relationship': null,
+            'age-wise': null
+        };
+        
+        // This object maps section IDs to their corresponding loading elements.
+        const loadingElements = {
+            'daily-horoscope': dailyLoading,
+            'monthly-annual': monthlyAnnualLoading,
+            'family-relationship': familyLoading,
+            'age-wise': ageWiseLoading,
         };
 
         // Function to update the text on the submit button based on the selected language.
@@ -467,8 +477,6 @@
         
         /**
          * Extracts a valid JSON string from a potentially malformed API response.
-         * The model sometimes wraps the JSON in markdown code blocks or includes
-         * conversational text. This function cleans that up.
          * @param {string} responseText The raw text response from the API.
          * @returns {string|null} The cleaned JSON string or null if not found.
          */
@@ -489,7 +497,6 @@
 
         /**
          * Fetches data from the API with a retry mechanism and exponential backoff.
-         * This improves reliability in case of transient network issues or API throttling.
          * @param {string} apiUrl The URL of the API endpoint.
          * @param {object} payload The request body payload.
          * @param {number} retries The maximum number of retries.
@@ -507,24 +514,19 @@
                     if (response.ok) {
                         return response;
                     } else if (response.status === 403) {
-                         // Specific handling for 403 error
                         throw new Error('403 Forbidden: API key or permissions issue.');
                     } else if (response.status >= 500) {
-                        // Server error, retry after a delay
                         const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
                         console.log(`API call failed with status ${response.status}. Retrying in ${delay}ms...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
                     } else {
-                        // Client error (4xx), do not retry
                         console.error(`API call failed with status ${response.status}. Not retrying.`);
                         return response;
                     }
                 } catch (error) {
-                    // Re-throw the 403 error immediately
                     if (error.message.includes('403')) {
                         throw error;
                     }
-                    // Network error, retry after a delay
                     const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
                     console.error(`Network error during API call. Retrying in ${delay}ms...`, error);
                     await new Promise(resolve => setTimeout(resolve, delay));
@@ -533,15 +535,165 @@
             throw new Error('API request failed after multiple retries.');
         };
         
+        /**
+         * Generates the prompt and schema for a specific section.
+         * @param {string} sectionId The ID of the section.
+         * @param {string} personName The user's name.
+         * @param {string} birthDate The user's birth date.
+         * @param {string} birthTime The user's birth time.
+         * @param {string} birthLocation The user's birth location.
+         * @param {string} language The selected language.
+         * @returns {{prompt: string, schema: object}} The prompt and JSON schema.
+         */
+        function getPromptAndSchema(sectionId, personName, birthDate, birthTime, birthLocation, language) {
+            switch (sectionId) {
+                case 'daily-horoscope':
+                    return {
+                        prompt: `Act as an expert Vedic astrologer. Generate a detailed daily horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
+                        The response must be a JSON object with only these properties:
+                        - overallForecast
+                        - planetImpact
+                        - relationships
+                        - economicStatus
+                        - healthStatus`,
+                        schema: {
+                            type: "OBJECT",
+                            properties: {
+                                overallForecast: { type: "STRING" },
+                                planetImpact: { type: "STRING" },
+                                relationships: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        father: { type: "STRING" },
+                                        mother: { type: "STRING" },
+                                        sibling: { type: "STRING" },
+                                        children: { type: "STRING" },
+                                        spouse: { type: "STRING" }
+                                    }
+                                },
+                                economicStatus: { type: "STRING" },
+                                healthStatus: { type: "STRING" }
+                            }
+                        }
+                    };
+                case 'monthly-annual':
+                    return {
+                        prompt: `Act as an expert Vedic astrologer. Generate a detailed monthly and annual horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
+                        The response must be a JSON object with only these properties:
+                        - monthlyHoroscope
+                        - annualHoroscope`,
+                        schema: {
+                            type: "OBJECT",
+                            properties: {
+                                monthlyHoroscope: { type: "STRING" },
+                                annualHoroscope: { type: "STRING" }
+                            }
+                        }
+                    };
+                case 'family-relationship':
+                    return {
+                        prompt: `Act as an expert Vedic astrologer. Generate a detailed forecast for family and relationships for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
+                        The response must be a JSON object with only these properties:
+                        - familySituation
+                        - carefulAbout
+                        - familyMembersHoroscope`,
+                        schema: {
+                            type: "OBJECT",
+                            properties: {
+                                familySituation: { type: "STRING" },
+                                carefulAbout: { type: "STRING" },
+                                familyMembersHoroscope: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            relationship: { type: "STRING" },
+                                            forecast: { type: "STRING" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                case 'age-wise':
+                    return {
+                        prompt: `Act as an expert Vedic astrologer. Generate an age-wise horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
+                        The response must be a JSON object with only this property:
+                        - ageWiseHoroscope`,
+                        schema: {
+                            type: "OBJECT",
+                            properties: {
+                                ageWiseHoroscope: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            ageBin: { type: "STRING" },
+                                            forecast: { type: "STRING" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+                default:
+                    return null;
+            }
+        }
+        
+        /**
+         * Fetches and caches data for a single section.
+         * @param {string} sectionId The ID of the section to fetch.
+         * @returns {Promise<object>} The fetched data object.
+         */
+        async function fetchAndCacheSection(sectionId, personName, birthDate, birthTime, birthLocation, language) {
+            const { prompt, schema } = getPromptAndSchema(sectionId, personName, birthDate, birthTime, birthLocation, language);
+            
+            const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: schema
+                }
+            };
+            
+            // The API key is a placeholder, and the platform will provide a real one.
+            const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg"; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            
+            const response = await fetchWithRetry(apiUrl, payload);
+            const result = await response.json();
+            
+            if (response.ok && result.candidates && result.candidates.length > 0) {
+                const rawText = result.candidates[0].content.parts[0].text;
+                let details;
+                try {
+                    details = JSON.parse(rawText);
+                } catch (jsonError) {
+                    const jsonString = extractJsonFromResponse(rawText);
+                    details = jsonString ? JSON.parse(jsonString) : null;
+                }
+                
+                if (details) {
+                    dataCache[sectionId] = details; // Cache the fetched data
+                    return details;
+                } else {
+                    throw new Error('Failed to parse JSON data.');
+                }
+            } else {
+                throw new Error('API response structure is unexpected or content is missing.');
+            }
+        }
+
         // This is the main function that runs when the form is submitted.
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Reset UI for new search
+            // Reset UI for a new search
             resultsContainer.classList.add('hidden');
             resultsTitle.textContent = '';
             basicProfileSection.innerHTML = '';
-            // Close all accordions and clear their content
             accordionHeaders.forEach(header => {
                 header.nextElementSibling.classList.remove('open');
                 header.querySelector('.chevron-icon').classList.remove('rotate-180');
@@ -568,7 +720,7 @@
 
             try {
                 // Gemini API Call for Initial Basic Profile
-                const prompt = `Act as an expert Vedic astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.
+                const basicProfilePrompt = `Act as an expert Vedic astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.
                 The response must be a JSON object with only these properties:
                 - sunSign
                 - moonSign
@@ -577,7 +729,7 @@
                 - planetPositions
                 `;
                 
-                const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const chatHistory = [{ role: "user", parts: [{ text: basicProfilePrompt }] }];
                 const payload = {
                     contents: chatHistory,
                     generationConfig: {
@@ -595,6 +747,7 @@
                     }
                 };
                 
+                // The API key is a placeholder, and the platform will provide a real one.
                 const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
                 
@@ -613,6 +766,16 @@
 
                     if (details) {
                         displayBasicProfile(details, language);
+                        
+                        // --- OPTIMIZATION: Start parallel fetching for all other sections ---
+                        const sectionIds = Object.keys(dataCache);
+                        const fetchPromises = sectionIds.map(id => fetchAndCacheSection(id, personName, birthDate, birthTime, birthLocation, language));
+                        
+                        // Wait for all parallel fetches to complete
+                        await Promise.all(fetchPromises.map(p => p.catch(e => console.error(`Error in parallel fetch for a section: ${e.message}`))));
+                        // Data is now ready in the cache!
+                        // --- End of Optimization ---
+
                     } else {
                         resultsContainer.classList.remove('hidden');
                         resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, couldn't generate initial details. **Failed to parse JSON data.**</p>`;
@@ -679,12 +842,18 @@
                 if (!isContentOpen && content.classList.contains('open')) {
                     const sectionId = content.id.replace('-content', '');
                     const detailsDiv = content.querySelector('div:not([id$="-loading"])');
-                    const loadingDiv = content.querySelector('div[id$="-loading"]');
+                    const loadingDiv = loadingElements[sectionId];
                     
-                    if (!dataCache[sectionId]) {
-                         loadingDiv.classList.remove('hidden');
+                    if (dataCache[sectionId]) {
+                         // Data is already in the cache, render it instantly
                          detailsDiv.innerHTML = '';
-                         await fetchSectionData(sectionId, detailsDiv, loadingDiv);
+                         displaySectionData(sectionId, dataCache[sectionId], detailsDiv);
+                         if(loadingDiv) loadingDiv.classList.add('hidden'); // Hide loading spinner if it was shown
+                    } else {
+                         // Data not in cache (e.g., initial parallel fetch failed for this section), fetch now
+                         if(loadingDiv) loadingDiv.classList.remove('hidden');
+                         detailsDiv.innerHTML = '';
+                         await fetchSectionData(sectionId, detailsDiv);
                     }
                 }
             });
@@ -694,151 +863,25 @@
          * Fetches and displays data for a specific section.
          * @param {string} sectionId The ID of the section to fetch (e.g., 'daily', 'monthlyAnnual').
          * @param {HTMLElement} detailsDiv The div to populate with the results.
-         * @param {HTMLElement} loadingDiv The loading spinner div.
          */
-        async function fetchSectionData(sectionId, detailsDiv, loadingDiv) {
+        async function fetchSectionData(sectionId, detailsDiv) {
             const language = languageSelect.value;
-            const t = translations[language];
             const personName = personNameInput.value;
             const birthDate = birthDateInput.value;
             const birthTime = birthTimeInput.value;
             const birthLocation = birthLocationInput.value;
             
-            let prompt, schema;
+            const loadingDiv = loadingElements[sectionId];
+            if(loadingDiv) loadingDiv.classList.remove('hidden');
 
-            // Define prompt and schema based on the section
-            switch (sectionId) {
-                case 'daily-horoscope':
-                    prompt = `Act as an expert Vedic astrologer. Generate a detailed daily horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
-                    The response must be a JSON object with only these properties:
-                    - overallForecast
-                    - planetImpact: Describe the impact of a specific planet's position today on the user.
-                    - relationships: (an object with nested properties for relationships with father, mother, sibling, children, and spouse, each with a detailed forecast)
-                    - economicStatus: Describe the user's economic status for the day.
-                    - healthStatus: Describe the user's health status for the day.`;
-                    schema = {
-                        type: "OBJECT",
-                        properties: {
-                            overallForecast: { type: "STRING" },
-                            planetImpact: { type: "STRING" },
-                            relationships: {
-                                type: "OBJECT",
-                                properties: {
-                                    father: { type: "STRING" },
-                                    mother: { type: "STRING" },
-                                    sibling: { type: "STRING" },
-                                    children: { type: "STRING" },
-                                    spouse: { type: "STRING" }
-                                }
-                            },
-                            economicStatus: { type: "STRING" },
-                            healthStatus: { type: "STRING" }
-                        }
-                    };
-                    break;
-                case 'monthly-annual':
-                    prompt = `Act as an expert Vedic astrologer. Generate a detailed monthly and annual horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
-                    The response must be a JSON object with only these properties:
-                    - monthlyHoroscope
-                    - annualHoroscope`;
-                    schema = {
-                        type: "OBJECT",
-                        properties: {
-                            monthlyHoroscope: { type: "STRING" },
-                            annualHoroscope: { type: "STRING" }
-                        }
-                    };
-                    break;
-                case 'family-relationship':
-                    prompt = `Act as an expert Vedic astrologer. Generate a detailed forecast for family and relationships for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
-                    The response must be a JSON object with only these properties:
-                    - familySituation: (a general overview)
-                    - carefulAbout
-                    - familyMembersHoroscope: (an array of objects, where each object has 'relationship' and 'forecast')`;
-                    schema = {
-                        type: "OBJECT",
-                        properties: {
-                            familySituation: { type: "STRING" },
-                            carefulAbout: { type: "STRING" },
-                            familyMembersHoroscope: {
-                                type: "ARRAY",
-                                items: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        relationship: { type: "STRING" },
-                                        forecast: { type: "STRING" }
-                                    }
-                                }
-                            }
-                        }
-                    };
-                    break;
-                case 'age-wise':
-                    prompt = `Act as an expert Vedic astrologer. Generate an age-wise horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
-                    The response must be a JSON object with only this property:
-                    - ageWiseHoroscope: (an array of objects, where each object has 'ageBin' and 'forecast'. The forecast for the current age bin should be more detailed than the others. Include a few age bins from the past and future, and the current age bin.)`;
-                    schema = {
-                        type: "OBJECT",
-                        properties: {
-                            ageWiseHoroscope: {
-                                type: "ARRAY",
-                                items: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        ageBin: { type: "STRING" },
-                                        forecast: { type: "STRING" }
-                                    }
-                                }
-                            }
-                        }
-                    };
-                    break;
-                default:
-                    console.error('Unknown section ID:', sectionId);
-                    loadingDiv.classList.add('hidden');
-                    return;
-            }
-            
             try {
-                const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-                const payload = {
-                    contents: chatHistory,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: schema
-                    }
-                };
-                
-                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                
-                const response = await fetchWithRetry(apiUrl, payload);
-                const result = await response.json();
-                
-                if (response.ok && result.candidates && result.candidates.length > 0) {
-                    const rawText = result.candidates[0].content.parts[0].text;
-                    let details;
-                    try {
-                        details = JSON.parse(rawText);
-                    } catch (jsonError) {
-                        const jsonString = extractJsonFromResponse(rawText);
-                        details = jsonString ? JSON.parse(jsonString) : null;
-                    }
-                    
-                    if (details) {
-                        dataCache[sectionId] = details; // Cache the fetched data
-                        displaySectionData(sectionId, details, detailsDiv);
-                    } else {
-                        detailsDiv.innerHTML = `<p class="text-red-400">Sorry, could not load this section. **Failed to parse JSON data.**</p>`;
-                    }
-                } else {
-                    detailsDiv.innerHTML = `<p class="text-red-400">An API error occurred. Please try again later.</p>`;
-                }
+                const details = await fetchAndCacheSection(sectionId, personName, birthDate, birthTime, birthLocation, language);
+                displaySectionData(sectionId, details, detailsDiv);
             } catch (error) {
                 console.error(`Error fetching data for section ${sectionId}:`, error);
                 detailsDiv.innerHTML = `<p class="text-red-400">An unexpected error occurred: **${error.message}**. Please try again.</p>`;
             } finally {
-                loadingDiv.classList.add('hidden');
+                if(loadingDiv) loadingDiv.classList.add('hidden');
             }
         }
 
