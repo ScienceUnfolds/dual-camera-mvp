@@ -331,7 +331,7 @@
                 dailyEconomicStatus: 'थौंया आर्थिक स्थिति:',
                 dailyHealthStatus: 'थौंया स्वास्थ्य स्थिति:',
                 ageWiseHoroscope: 'उमेरकथंया राशिफल:',
-                currentAgeDetails: 'आःया उमेरया विवरण:',
+                currentAgeDetails: 'वर्तमान उमेरया विवरण:',
                 familyMemberHoroscope: 'परिवारया दुजःपिनिगु राशिफल:'
             }
         };
@@ -532,7 +532,7 @@
                     }
                  };
                 
-                const apiKey = "";
+                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
                 
                 const response = await fetchWithRetry(apiUrl, payload);
