@@ -379,10 +379,8 @@
 
                 // Re-enable the button.
                 submitBtn.disabled = false;
-                // Update the button text to the correct language.
-                updateButtonText();
-                // Replace the spinner SVG with the original search icon.
-                submitBtn.innerHTML = `<i data-lucide="search" size="20" class="search-icon"></i><span id="button-text">${translations[language].button}</span>`;
+                // Rebuild the button's content to ensure the correct text and icon are used.
+                submitBtn.innerHTML = `<i data-lucide="search" size="20" class="search-icon"></i><span id="button-text">${translations[languageSelect.value].button}</span>`;
                 // Re-render the icons to make sure the search icon appears.
                 lucide.createIcons();
             }
