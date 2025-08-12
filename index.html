@@ -202,32 +202,6 @@
         updateButtonText(); // Call the function once when the page loads to set the initial text.
 
         /**
-         * Extracts a valid JSON string from a potentially malformed API response.
-         * The model sometimes wraps the JSON in markdown code blocks or includes
-         * conversational text. This function cleans that up.
-         * @param {string} responseText The raw text response from the API.
-         * @returns {string|null} The cleaned JSON string or null if not found.
-         */
-        const extractJsonFromResponse = (responseText) => {
-            // Regex to find a block of text that looks like a JSON object.
-            // This handles cases with and without markdown code blocks.
-            const jsonRegex = /```json\s*([\s\S]*?)\s*```|({[\s\S]*})/;
-            const match = responseText.match(jsonRegex);
-
-            if (match && match[1]) {
-                return match[1]; // Return content inside the ```json block
-            } else if (match && match[2]) {
-                // Ensure it's a valid JSON object by trimming whitespace before returning
-                const trimmed = match[2].trim();
-                // A quick check to see if it starts with { and ends with }
-                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-                    return trimmed;
-                }
-            }
-            return null; // No valid JSON found
-        };
-
-        /**
          * Fetches data from the API with a retry mechanism and exponential backoff.
          * This improves reliability in case of transient network issues or API throttling.
          * @param {string} apiUrl The URL of the API endpoint.
@@ -280,7 +254,7 @@
             // Clear the button text.
             buttonText.textContent = '';
             // Insert the SVG code for the loading spinner into the button.
-            submitBtn.innerHTML = '<svg class="animate-spin-fast h-5 w-5 text-gray-900" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            submitBtn.innerHTML = '<svg class="animate-spin-fast h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
             // Hide the results container from the previous submission, if any.
             resultsContainer.classList.add('hidden');
 
@@ -299,13 +273,28 @@
                 const t = translations[language];
                 // The prompt now explicitly asks for a JSON object and nothing else,
                 // so we don't need the generationConfig.responseMimeType property.
-                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The only content in your response should be a JSON object with the following properties: "sunSign", "moonSign", "ascendant", "houseDetails", "planetPositions", "monthlyRashifal", and "annualRashifal". The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.`;
+                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.`;
                 
                 const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
                 const payload = {
-                     contents: chatHistory,
-                     // We've removed the generationConfig for structured output to improve reliability.
-                     // The model will now return a text string, which we will parse manually.
+                    contents: chatHistory,
+                    generationConfig: {
+                        // We are now explicitly requesting a JSON response with a defined schema.
+                        // This is a much more reliable way to ensure the response is parsable.
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                sunSign: { type: "STRING" },
+                                moonSign: { type: "STRING" },
+                                ascendant: { type: "STRING" },
+                                houseDetails: { type: "STRING" },
+                                planetPositions: { type: "STRING" },
+                                monthlyRashifal: { type: "STRING" },
+                                annualRashifal: { type: "STRING" }
+                            }
+                        }
+                    }
                  };
                 
                 const apiKey = "";
@@ -317,23 +306,13 @@
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
-                        const rawText = result.candidates[0].content.parts[0].text;
-                        console.log("Raw API Response Text:", rawText); // Log the raw response for debugging
-                        const jsonString = extractJsonFromResponse(rawText);
-
-                        if (jsonString) {
-                            try {
-                                const details = JSON.parse(jsonString);
-                                displayResults(details, language);
-                            } catch (jsonError) {
-                                console.error('Failed to parse JSON from API response:', jsonError, rawText);
-                                resultsContainer.classList.remove('hidden');
-                                resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I received an invalid response from the server. Please try again. The raw response was: <pre>${rawText}</pre></p>`;
-                            }
-                        } else {
-                            console.error('API response did not contain a valid JSON object.', rawText);
+                        try {
+                            const details = JSON.parse(result.candidates[0].content.parts[0].text);
+                            displayResults(details, language);
+                        } catch (jsonError) {
+                            console.error('Failed to parse JSON from API response:', jsonError, result.candidates[0].content.parts[0].text);
                             resultsContainer.classList.remove('hidden');
-                            resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast due to an unexpected format from the server. Please try again.</p>`;
+                            resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I received an invalid response from the server. Please try again. The raw response was: <pre>${result.candidates[0].content.parts[0].text}</pre></p>`;
                         }
                 } else {
                     console.error('API response structure is unexpected or content is missing', result);
