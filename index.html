@@ -685,6 +685,56 @@
                 throw new Error('API response structure is unexpected or content is missing.');
             }
         }
+        
+        /**
+         * Determines the Moon Sign (Rashi) based on the date of birth using a simplified
+         * Sidereal (Vedic) calendar mapping. This provides a deterministic result
+         * that is more accurate than relying on a general LLM response.
+         * @param {Date} date The birth date.
+         * @returns {string} The name of the Rashi.
+         */
+        function getMoonSign(date) {
+            const day = date.getDate();
+            const month = date.getMonth() + 1; // getMonth() is 0-indexed
+
+            const rashiMap = [
+                { startMonth: 3, startDay: 13, name: 'Kumbha (Aquarius)' },
+                { startMonth: 4, startDay: 14, name: 'Meena (Pisces)' },
+                { startMonth: 5, startDay: 14, name: 'Mesha (Aries)' },
+                { startMonth: 6, startDay: 14, name: 'Vrishabha (Taurus)' },
+                { startMonth: 7, startDay: 16, name: 'Mithuna (Gemini)' },
+                { startMonth: 8, startDay: 17, name: 'Karka (Cancer)' },
+                { startMonth: 9, startDay: 17, name: 'Simha (Leo)' },
+                { startMonth: 10, startDay: 17, name: 'Kanya (Virgo)' },
+                { startMonth: 11, startDay: 16, name: 'Tula (Libra)' },
+                { startMonth: 12, startDay: 16, name: 'Vrishchika (Scorpio)' },
+                { startMonth: 1, startDay: 15, name: 'Dhanu (Sagittarius)' },
+                { startMonth: 2, startDay: 13, name: 'Makara (Capricorn)' },
+            ];
+
+            let rashi = 'Unknown';
+            for (let i = 0; i < rashiMap.length; i++) {
+                const current = rashiMap[i];
+                const next = rashiMap[(i + 1) % rashiMap.length];
+                
+                const currentStart = new Date(1900, current.startMonth - 1, current.startDay);
+                const nextStart = new Date(1900, next.startMonth - 1, next.startDay);
+                const testDate = new Date(1900, month - 1, day);
+
+                if (current.startMonth <= next.startMonth) {
+                    if (testDate >= currentStart && testDate < nextStart) {
+                        rashi = current.name;
+                        break;
+                    }
+                } else { // Handles the December to January wrap-around
+                    if (testDate >= currentStart || testDate < nextStart) {
+                        rashi = current.name;
+                        break;
+                    }
+                }
+            }
+            return rashi;
+        }
 
         // This is the main function that runs when the form is submitted.
         form.addEventListener('submit', async (e) => {
@@ -707,23 +757,26 @@
             submitBtn.innerHTML = '<svg class="animate-spin-fast h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
             const personName = personNameInput.value;
-            const birthDate = birthDateInput.value;
+            const birthDateStr = birthDateInput.value;
             const birthTime = birthTimeInput.value;
             const birthLocation = birthLocationInput.value;
             const language = languageSelect.value;
             const t = translations[language];
+            
+            // --- NEW: Calculate Rashi locally for accuracy ---
+            const birthDate = new Date(birthDateStr);
+            const moonSign = getMoonSign(birthDate);
 
             // Clear cache
             Object.keys(dataCache).forEach(key => dataCache[key] = null);
             
-            console.log('Fetching initial astrology details for:', { personName, birthDate, birthTime, birthLocation, language });
+            console.log('Fetching initial astrology details for:', { personName, birthDateStr, birthTime, birthLocation, language });
 
             try {
                 // Gemini API Call for Initial Basic Profile
-                const basicProfilePrompt = `Act as an expert Vedic astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.
+                const basicProfilePrompt = `Act as an expert Vedic astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDateStr}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.
                 The response must be a JSON object with only these properties:
                 - sunSign
-                - moonSign
                 - ascendant
                 - houseDetails
                 - planetPositions
@@ -738,7 +791,6 @@
                             type: "OBJECT",
                             properties: {
                                 sunSign: { type: "STRING" },
-                                moonSign: { type: "STRING" },
                                 ascendant: { type: "STRING" },
                                 houseDetails: { type: "STRING" },
                                 planetPositions: { type: "STRING" }
@@ -765,11 +817,12 @@
                     }
 
                     if (details) {
-                        displayBasicProfile(details, language);
+                        // Pass the locally calculated Moon Sign to the display function
+                        displayBasicProfile(details, moonSign, language);
                         
                         // --- OPTIMIZATION: Start parallel fetching for all other sections ---
                         const sectionIds = Object.keys(dataCache);
-                        const fetchPromises = sectionIds.map(id => fetchAndCacheSection(id, personName, birthDate, birthTime, birthLocation, language));
+                        const fetchPromises = sectionIds.map(id => fetchAndCacheSection(id, personName, birthDateStr, birthTime, birthLocation, language));
                         
                         // Wait for all parallel fetches to complete
                         await Promise.all(fetchPromises.map(p => p.catch(e => console.error(`Error in parallel fetch for a section: ${e.message}`))));
@@ -805,14 +858,14 @@
         });
         
         // This function displays the initial profile details
-        function displayBasicProfile(details, language) {
+        function displayBasicProfile(details, moonSign, language) {
             const t = translations[language];
             resultsContainer.classList.remove('hidden');
             resultsTitle.textContent = t.title;
             basicProfileSection.innerHTML = `
                 <p><strong>${t.hello}</strong> <span class="font-semibold text-yellow-200">${personNameInput.value}</span></p>
                 <p><strong>${t.sunSign}</strong> <span class="font-semibold text-yellow-200">${details.sunSign}</span></p>
-                <p><strong>${t.moonSign}</strong> <span class="font-semibold text-yellow-200">${details.moonSign}</span></p>
+                <p><strong>${t.moonSign}</strong> <span class="font-semibold text-yellow-200">${moonSign}</span></p>
                 <p><strong>${t.ascendant}</strong> <span class="font-semibold text-yellow-200">${details.ascendant}</span></p>
                 <p><strong>${t.houseDetails}</strong> ${details.houseDetails}</p>
                 <p><strong>${t.planetPositions}</strong> ${details.planetPositions}</p>
