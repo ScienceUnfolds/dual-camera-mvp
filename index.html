@@ -327,8 +327,14 @@
                         const jsonString = extractJsonFromResponse(rawJson);
 
                         if (jsonString) {
-                            const details = JSON.parse(jsonString);
-                            displayResults(details, language);
+                            try {
+                                const details = JSON.parse(jsonString);
+                                displayResults(details, language);
+                            } catch (jsonError) {
+                                console.error('Failed to parse JSON from API response:', jsonError, rawJson);
+                                resultsContainer.classList.remove('hidden');
+                                resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I got an invalid response from the server. Please try again.</p>`;
+                            }
                         } else {
                             console.error('API response did not contain a valid JSON object.', rawJson);
                             resultsContainer.classList.remove('hidden');
@@ -340,7 +346,7 @@
                     resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. Please check your details and try again.</p>`;
                 }
             } catch (error) {
-                // If an error occurs during the "API call", this block will run.
+                // If a network error or other unhandled error occurs during the "API call", this block will run.
                 console.error('Error fetching astrology details:', error);
                 // Make the results container visible to show the error.
                 resultsContainer.classList.remove('hidden');
