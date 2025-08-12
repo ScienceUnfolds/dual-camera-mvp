@@ -1,252 +1,279 @@
-import { useState } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-
-const App = () => {
-  const [name, setName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [birthTime, setBirthTime] = useState('');
-  const [birthPlace, setBirthPlace] = useState('');
-  const [chartData, setChartData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Firebase initialisation & auth (required for API calls in the environment)
-  // These variables are provided by the canvas environment
-  const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-  const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  getFirestore(app);
-
-  const getApiResponse = async (prompt) => {
-    try {
-      if (initialAuthToken) {
-        await signInWithCustomToken(auth, initialAuthToken);
-      } else {
-        await signInAnonymously(auth);
-      }
-    } catch (e) {
-      console.error("Firebase Auth error:", e);
-      // Continue even if auth fails, the API key might be enough.
-    }
-
-    // Exponential backoff for API calls
-    const makeApiCall = async (retries = 0) => {
-      const chatHistory = [{
-        role: "user",
-        parts: [{ text: prompt }]
-      }];
-
-      const payload = {
-        contents: chatHistory,
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              rashi: { type: "STRING" },
-              lagna: { type: "STRING" },
-              planetary_positions: {
-                type: "ARRAY",
-                items: {
-                  type: "OBJECT",
-                  properties: {
-                    planet: { type: "STRING" },
-                    position: { type: "STRING" }
-                  }
-                }
-              }
-            }
-          }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astrology Chart Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
         }
-      };
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-6 lg:p-8">
 
-      const apiKey = ''; // Provided by the environment
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="w-full max-w-2xl bg-gray-50 rounded-2xl shadow-xl p-6 sm:p-8">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-indigo-700">
+                    Astrology Chart Generator
+                </h1>
+                <p class="text-gray-500 mt-2 text-sm sm:text-base">
+                    Enter your birth details to generate your chart.
+                </p>
+            </div>
 
-      try {
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+            <form id="astrology-form" class="space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                    <input
+                        type="text"
+                        id="name"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        required
+                    />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="birthDate" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                        <input
+                            type="date"
+                            id="birthDate"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label for="birthTime" class="block text-sm font-medium text-gray-700">Time of Birth</label>
+                        <input
+                            type="time"
+                            id="birthTime"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            required
+                        />
+                    </div>
+                </div>
+                <div>
+                    <label for="birthPlace" class="block text-sm font-medium text-gray-700">Place of Birth</label>
+                    <input
+                        type="text"
+                        id="birthPlace"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="e.g., New York, NY"
+                        required
+                    />
+                </div>
+                <button
+                    type="submit"
+                    id="submit-button"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    Generate My Chart
+                </button>
+            </form>
+
+            <div id="error-message" class="mt-4 text-center text-red-500 hidden"></div>
+            <div id="loading-spinner" class="mt-4 text-center hidden">
+                <svg class="animate-spin h-8 w-8 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <div id="results-container"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- Firebase Initialisation ---
+        // These variables are provided by the canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        getFirestore(app);
+
+        // --- DOM Elements ---
+        const form = document.getElementById('astrology-form');
+        const nameInput = document.getElementById('name');
+        const dateInput = document.getElementById('birthDate');
+        const timeInput = document.getElementById('birthTime');
+        const placeInput = document.getElementById('birthPlace');
+        const submitButton = document.getElementById('submit-button');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const resultsContainer = document.getElementById('results-container');
+        const errorMessage = document.getElementById('error-message');
+
+        // --- API Call Logic ---
+        const getApiResponse = async (prompt) => {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Firebase Auth error:", e);
+                // Continue even if auth fails, the API key might be enough.
+            }
+
+            const makeApiCall = async (retries = 0) => {
+                const chatHistory = [{
+                    role: "user",
+                    parts: [{ text: prompt }]
+                }];
+
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                rashi: { type: "STRING" },
+                                lagna: { type: "STRING" },
+                                planetary_positions: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            planet: { type: "STRING" },
+                                            position: { type: "STRING" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+
+                const apiKey = ''; // Provided by the environment
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`API call failed: ${response.status} - ${errorText}`);
+                    }
+
+                    const result = await response.json();
+                    const jsonString = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    return JSON.parse(jsonString);
+
+                } catch (e) {
+                    if (e.message.includes('429') && retries < 5) {
+                        const delay = Math.pow(2, retries) * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return makeApiCall(retries + 1);
+                    }
+                    throw e;
+                }
+            };
+            return makeApiCall();
+        };
+
+        // --- Form Submission Handler ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Reset state
+            resultsContainer.innerHTML = '';
+            errorMessage.textContent = '';
+            errorMessage.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            submitButton.disabled = true;
+            submitButton.classList.add('bg-indigo-400', 'cursor-not-allowed');
+            submitButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+
+            const name = nameInput.value;
+            const birthDate = dateInput.value;
+            const birthTime = timeInput.value;
+            const birthPlace = placeInput.value;
+
+            const prompt = `Act as a professional Vedic astrologer. I will provide you with a person's name, date of birth, time of birth, and place of birth. Based on this information, please calculate and provide the following details in a JSON object:
+                1.  **Rashi (Moon Sign):** The sign the Moon was in at the time of birth.
+                2.  **Lagna (Ascendant):** The sign rising on the eastern horizon at the time of birth.
+                3.  **Planetary Positions:** A list of the major planets (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn) and the sign they were in at the time of birth.
+
+                Please provide the output in a single, valid JSON object with the following structure:
+                {
+                    "rashi": "...",
+                    "lagna": "...",
+                    "planetary_positions": [
+                        {"planet": "Sun", "position": "..."},
+                        ...
+                    ]
+                }
+
+                Here are the birth details:
+                Name: ${name}
+                Date of Birth: ${birthDate}
+                Time of Birth: ${birthTime}
+                Place of Birth: ${birthPlace}
+                `;
+
+            try {
+                const chartData = await getApiResponse(prompt);
+                
+                // Render results
+                let planetaryListHtml = chartData.planetary_positions.map(item => `
+                    <li class="bg-gray-50 p-3 rounded-md shadow-sm">
+                        <span class="font-semibold text-gray-700">${item.planet}:</span>
+                        <span class="font-medium text-gray-900">${item.position}</span>
+                    </li>
+                `).join('');
+
+                resultsContainer.innerHTML = `
+                    <div class="mt-8 p-6 bg-white rounded-xl shadow-lg">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Astrological Overview for ${name}</h3>
+                        <p class="text-gray-600 mb-4">
+                            This chart has been generated based on your birth details using a large language model with extensive astrological knowledge.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-100 p-4 rounded-lg">
+                                <p class="text-lg font-semibold text-gray-700">Rashi (Moon Sign):</p>
+                                <p class="text-xl font-bold text-indigo-600">${chartData.rashi}</p>
+                            </div>
+                            <div class="bg-gray-100 p-4 rounded-lg">
+                                <p class="text-lg font-semibold text-gray-700">Lagna (Ascendant):</p>
+                                <p class="text-xl font-bold text-indigo-600">${chartData.lagna}</p>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <p class="text-xl font-bold text-gray-800 mb-2">Planetary Positions:</p>
+                            <ul class="space-y-2">
+                                ${planetaryListHtml}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+
+            } catch (e) {
+                console.error('Error fetching chart data:', e);
+                errorMessage.textContent = 'Failed to generate chart data. Please check your inputs and try again.';
+                errorMessage.classList.remove('hidden');
+            } finally {
+                loadingSpinner.classList.add('hidden');
+                submitButton.disabled = false;
+                submitButton.classList.remove('bg-indigo-400', 'cursor-not-allowed');
+                submitButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            }
         });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`API call failed: ${response.status} - ${errorText}`);
-        }
-
-        const result = await response.json();
-        const jsonString = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        return JSON.parse(jsonString);
-
-      } catch (e) {
-        if (e.message.includes('429') && retries < 5) {
-          const delay = Math.pow(2, retries) * 1000;
-          await new Promise(resolve => setTimeout(resolve, delay));
-          return makeApiCall(retries + 1);
-        }
-        throw e;
-      }
-    };
-    return makeApiCall();
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setChartData(null);
-    setError('');
-
-    const prompt = `Act as a professional Vedic astrologer. I will provide you with a person's name, date of birth, time of birth, and place of birth. Based on this information, please calculate and provide the following details in a JSON object:
-      1.  **Rashi (Moon Sign):** The sign the Moon was in at the time of birth.
-      2.  **Lagna (Ascendant):** The sign rising on the eastern horizon at the time of birth.
-      3.  **Planetary Positions:** A list of the major planets (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn) and the sign they were in at the time of birth.
-
-      Please provide the output in a single, valid JSON object with the following structure:
-      {
-        "rashi": "...",
-        "lagna": "...",
-        "planetary_positions": [
-          {"planet": "Sun", "position": "..."},
-          ...
-        ]
-      }
-
-      Here are the birth details:
-      Name: ${name}
-      Date of Birth: ${birthDate}
-      Time of Birth: ${birthTime}
-      Place of Birth: ${birthPlace}
-      `;
-
-    try {
-      const data = await getApiResponse(prompt);
-      setChartData(data);
-    } catch (e) {
-      console.error('Error fetching chart data:', e);
-      setError('Failed to generate chart data. Please check your inputs and try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderData = () => {
-    if (!chartData) return null;
-
-    return (
-      <div className="mt-8 p-6 bg-white rounded-xl shadow-lg">
-        <h3 className="text-2xl font-bold text-gray-800 mb-4">Astrological Overview for {name}</h3>
-        <p className="text-gray-600 mb-4">
-          This chart has been generated based on your birth details using a large language model with extensive astrological knowledge.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="text-lg font-semibold text-gray-700">Rashi (Moon Sign):</p>
-            <p className="text-xl font-bold text-indigo-600">{chartData.rashi}</p>
-          </div>
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <p className="text-lg font-semibold text-gray-700">Lagna (Ascendant):</p>
-            <p className="text-xl font-bold text-indigo-600">{chartData.lagna}</p>
-          </div>
-        </div>
-        <div className="mt-6">
-          <p className="text-xl font-bold text-gray-800 mb-2">Planetary Positions:</p>
-          <ul className="space-y-2">
-            {chartData.planetary_positions.map((item, index) => (
-              <li key={index} className="bg-gray-50 p-3 rounded-md shadow-sm">
-                <span className="font-semibold text-gray-700">{item.planet}:</span>{' '}
-                <span className="font-medium text-gray-900">{item.position}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
-      <div className="w-full max-w-2xl bg-gray-50 rounded-2xl shadow-xl p-6 sm:p-8">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-indigo-700">
-            Astrology Chart Generator
-          </h1>
-          <p className="text-gray-500 mt-2 text-sm sm:text-base">
-            Enter your birth details to generate your chart.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">Date of Birth</label>
-              <input
-                type="date"
-                id="birthDate"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="birthTime" className="block text-sm font-medium text-gray-700">Time of Birth</label>
-              <input
-                type="time"
-                id="birthTime"
-                value={birthTime}
-                onChange={(e) => setBirthTime(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor="birthPlace" className="block text-sm font-medium text-gray-700">Place of Birth</label>
-            <input
-              type="text"
-              id="birthPlace"
-              value={birthPlace}
-              onChange={(e) => setBirthPlace(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="e.g., New York, NY"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'}`}
-            disabled={loading}
-          >
-            {loading ? (
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : 'Generate My Chart'}
-          </button>
-        </form>
-
-        {error && <p className="mt-4 text-center text-red-500">{error}</p>}
-        {renderData()}
-      </div>
-    </div>
-  );
-};
-
-export default App;
+    </script>
+</body>
+</html>
