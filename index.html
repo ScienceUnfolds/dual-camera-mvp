@@ -264,7 +264,7 @@
                 title: 'Your Astrological Profile',
                 hello: 'Hello',
                 sunSign: 'Sun Sign:',
-                moonSign: 'Moon Sign:',
+                moonSign: 'Moon Sign (Rashi):', // Corrected to be more specific
                 ascendant: 'Ascendant:',
                 houseDetails: 'House Details:',
                 planetPositions: 'Planet Positions:',
@@ -568,7 +568,7 @@
 
             try {
                 // Gemini API Call for Initial Basic Profile
-                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.
+                const prompt = `Act as an expert Vedic astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.
                 The response must be a JSON object with only these properties:
                 - sunSign
                 - moonSign
@@ -709,7 +709,7 @@
             // Define prompt and schema based on the section
             switch (sectionId) {
                 case 'daily-horoscope':
-                    prompt = `Act as an expert astrologer. Generate a detailed daily horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
+                    prompt = `Act as an expert Vedic astrologer. Generate a detailed daily horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
                     The response must be a JSON object with only these properties:
                     - overallForecast
                     - planetImpact: Describe the impact of a specific planet's position today on the user.
@@ -737,7 +737,7 @@
                     };
                     break;
                 case 'monthly-annual':
-                    prompt = `Act as an expert astrologer. Generate a detailed monthly and annual horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
+                    prompt = `Act as an expert Vedic astrologer. Generate a detailed monthly and annual horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
                     The response must be a JSON object with only these properties:
                     - monthlyHoroscope
                     - annualHoroscope`;
@@ -750,7 +750,7 @@
                     };
                     break;
                 case 'family-relationship':
-                    prompt = `Act as an expert astrologer. Generate a detailed forecast for family and relationships for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
+                    prompt = `Act as an expert Vedic astrologer. Generate a detailed forecast for family and relationships for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
                     The response must be a JSON object with only these properties:
                     - familySituation: (a general overview)
                     - carefulAbout
@@ -774,7 +774,7 @@
                     };
                     break;
                 case 'age-wise':
-                    prompt = `Act as an expert astrologer. Generate an age-wise horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
+                    prompt = `Act as an expert Vedic astrologer. Generate an age-wise horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
                     The response must be a JSON object with only this property:
                     - ageWiseHoroscope: (an array of objects, where each object has 'ageBin' and 'forecast'. The forecast for the current age bin should be more detailed than the others. Include a few age bins from the past and future, and the current age bin.)`;
                     schema = {
