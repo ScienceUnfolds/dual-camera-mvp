@@ -299,7 +299,7 @@
                 const t = translations[language];
                 // The prompt now explicitly asks for a JSON object and nothing else,
                 // so we don't need the generationConfig.responseMimeType property.
-                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The response must be a JSON object and nothing else. The JSON object must have the following properties: "sunSign", "moonSign", "ascendant", "houseDetails", "planetPositions", "monthlyRashifal", and "annualRashifal". The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.`;
+                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The only content in your response should be a JSON object with the following properties: "sunSign", "moonSign", "ascendant", "houseDetails", "planetPositions", "monthlyRashifal", and "annualRashifal". The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.`;
                 
                 const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
                 const payload = {
@@ -318,6 +318,7 @@
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
                         const rawText = result.candidates[0].content.parts[0].text;
+                        console.log("Raw API Response Text:", rawText); // Log the raw response for debugging
                         const jsonString = extractJsonFromResponse(rawText);
 
                         if (jsonString) {
