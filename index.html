@@ -33,11 +33,11 @@
         It's styled with a dark, semi-transparent background, rounded corners,
         and a subtle shadow to make it stand out.
     -->
-    <div class="bg-gray-900 bg-opacity-70 shadow-2xl rounded-xl p-8 max-w-md w-full transform transition-all duration-300 hover:scale-105">
+    <div class="bg-gray-900 bg-opacity-70 shadow-2xl rounded-xl p-8 max-w-lg w-full transform transition-all duration-300 hover:scale-105">
         <!-- Main heading for the app -->
         <h1 class="text-4xl font-bold text-center mb-6 text-yellow-300 drop-shadow-lg">Astrology Sun Sign Calculator</h1>
         <!-- A short descriptive paragraph -->
-        <p class="text-center text-gray-300 mb-8">Enter your date of birth to discover your zodiac Sun Sign!</p>
+        <p class="text-center text-gray-300 mb-8">Enter your date of birth to discover your zodiac Sun Sign and its characteristics!</p>
 
         <!--
             The main form for user input.
@@ -113,6 +113,58 @@
             { sign: 'Sagittarius', start: { month: 11, day: 22 } }, // Dec 22
             { sign: 'Capricorn', start: { month: 11, day: 31 } } // Wrap-around for Capricorn
         ];
+        
+        // This object stores a detailed horoscope description for each sign.
+        const horoscopeDescriptions = {
+            'Aries': {
+                emoji: '♈️',
+                description: "Aries is a Fire sign ruled by Mars. As the first sign of the zodiac, Aries individuals are known for their pioneering spirit, boundless energy, and fierce independence. They are natural leaders, courageous, and direct, often tackling challenges head-on. On the flip side, they can be impulsive, competitive, and impatient. They thrive on action and are always ready for a new adventure."
+            },
+            'Taurus': {
+                emoji: '♉️',
+                description: "Taurus is an Earth sign ruled by Venus. Taureans are grounded, dependable, and practical. They appreciate the finer things in life, seeking comfort, stability, and beauty in their surroundings. They are known for their stubbornness, but this also translates to incredible determination and loyalty. They are patient, hard-working, and have a strong connection to the natural world."
+            },
+            'Gemini': {
+                emoji: '♊️',
+                description: "Gemini is an Air sign ruled by Mercury. Represented by the Twins, Geminis are adaptable, curious, and witty communicators. They have a thirst for knowledge and are constantly seeking new information and experiences. Their dual nature can make them seem inconsistent or indecisive, but it also gives them a unique ability to see both sides of any issue. They are social butterflies, charming and full of life."
+            },
+            'Cancer': {
+                emoji: '♋️',
+                description: "Cancer is a Water sign ruled by the Moon. Cancers are deeply intuitive, compassionate, and nurturing individuals. They are protective of their loved ones and have a strong emotional intelligence. Like the crab that symbolizes them, they can be sensitive and prone to withdrawing into their shell when feeling threatened. Their strong family bonds and home-loving nature are central to their identity."
+            },
+            'Leo': {
+                emoji: '♌️',
+                description: "Leo is a Fire sign ruled by the Sun. Leos are confident, charismatic, and natural-born leaders. They love to be in the spotlight and have a flair for the dramatic. Their generous and warm-hearted nature makes them fiercely loyal friends and partners. While they can be a bit prideful and stubborn, their passion and creativity are truly inspiring to those around them."
+            },
+            'Virgo': {
+                emoji: '♍️',
+                description: "Virgo is an Earth sign ruled by Mercury. Virgos are analytical, meticulous, and practical. They have a keen eye for detail and a desire for perfection, which makes them excellent problem-solvers and organizers. They are kind-hearted and dedicated, always ready to lend a helping hand. They can be overly critical of themselves and others, but their intentions are always pure and rooted in a desire to improve."
+            },
+            'Libra': {
+                emoji: '♎️',
+                description: "Libra is an Air sign ruled by Venus. Libras are all about balance, harmony, and justice. They are charming, diplomatic, and have a deep appreciation for beauty and art. They strive to maintain peace and fairness in all relationships and situations. Their indecisiveness can be a challenge, but it stems from their desire to consider every perspective before making a decision. They are cooperative and social, enjoying partnerships of all kinds."
+            },
+            'Scorpio': {
+                emoji: '♏️',
+                description: "Scorpio is a Water sign ruled by Pluto and Mars. Scorpios are known for their intensity, passion, and magnetic personality. They are fiercely determined and resourceful, often diving deep into the mysteries of life. While they can be secretive and misunderstood, their loyalty and protective nature are unmatched. Their transformative power allows them to rebuild and reinvent themselves from the ground up."
+            },
+            'Sagittarius': {
+                emoji: '♐️',
+                description: "Sagittarius is a Fire sign ruled by Jupiter. Sagittarians are the adventurers of the zodiac, with an optimistic and philosophical outlook on life. They have a love for travel, freedom, and learning, always seeking new horizons. Their honesty can sometimes be brutally blunt, but it comes from a place of genuine sincerity. They are humorous, open-minded, and inspire those around them to explore the world."
+            },
+            'Capricorn': {
+                emoji: '♑️',
+                description: "Capricorn is an Earth sign ruled by Saturn. Capricorns are ambitious, disciplined, and responsible. They are the masters of self-control, always working towards their long-term goals with unwavering determination. While they can appear reserved or serious, they have a dry sense of humor and a deep loyalty to their inner circle. They value tradition and are the rock that others can depend on."
+            },
+            'Aquarius': {
+                emoji: '♒️',
+                description: "Aquarius is an Air sign ruled by Uranus and Saturn. Aquarians are the innovators and humanitarians of the zodiac. They are intellectual, eccentric, and value their independence above all else. They are driven by a desire for social change and are often involved in causes that benefit humanity. Their unique perspective can make them seem detached, but they are deeply caring and dedicated to their ideals."
+            },
+            'Pisces': {
+                emoji: '♓️',
+                description: "Pisces is a Water sign ruled by Neptune. As the last sign of the zodiac, Pisces individuals are empathetic, artistic, and deeply intuitive. They are dreamers with a rich inner world, often blurring the lines between fantasy and reality. Their compassionate and gentle nature makes them incredibly sensitive to the emotions of others. They are selfless and often find solace in creative pursuits like music or art."
+            }
+        };
 
         /**
          * Calculates the Sun Sign based on a given birth date.
@@ -129,6 +181,12 @@
                 const currentSign = zodiacSigns[i];
                 const nextSign = zodiacSigns[(i + 1) % zodiacSigns.length];
 
+                // Special handling for the Capricorn wrap-around, since it spans two months.
+                if (currentSign.sign === 'Capricorn' && birthMonth === 11 && birthDay >= currentSign.start.day) {
+                    sunSign = 'Capricorn';
+                    break;
+                }
+                
                 // Check if the birth date falls between the start dates of two signs.
                 if ((birthMonth === currentSign.start.month && birthDay >= currentSign.start.day) ||
                     (birthMonth === nextSign.start.month && birthDay < nextSign.start.day)) {
@@ -150,7 +208,8 @@
 
             // Simple validation to ensure the date is entered.
             if (!birthDateValue) {
-                alert('Please enter a valid date of birth.');
+                // Use a modal-like approach instead of `alert()`
+                displayModal('Please enter a valid date of birth.');
                 return;
             }
 
@@ -163,17 +222,43 @@
             // Display the results to the user.
             displayResults(personName, sunSign);
         });
+        
+        /**
+         * Displays a simple message to the user, replacing the alert().
+         * @param {string} message The message to be displayed.
+         */
+        function displayModal(message) {
+            const modalHtml = `
+                <div id="custom-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-xl text-center w-full max-w-sm">
+                        <p class="text-white text-lg mb-4">${message}</p>
+                        <button onclick="document.getElementById('custom-modal').remove()" class="bg-yellow-500 text-gray-900 font-bold py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors duration-200">
+                            OK
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
 
         // This function takes the person's name and Sun Sign,
         // then generates the HTML to display the results in the results container.
         function displayResults(name, sign) {
+            // Get the detailed description for the calculated sign.
+            const signData = horoscopeDescriptions[sign];
+            
             resultsContainer.classList.remove('hidden'); // Makes the results container visible
             resultsContainer.innerHTML = `
                 <h2 class="text-2xl font-bold mb-4 text-center text-yellow-300">Your Astrological Profile</h2>
                 <div class="space-y-4 text-gray-300">
                     <p>Hello <span class="font-semibold text-yellow-200">${name || 'Friend'}</span>,</p>
                     <p>Based on your date of birth, your Sun Sign is:</p>
-                    <p class="text-center text-5xl font-extrabold text-yellow-400 drop-shadow-xl">${sign}</p>
+                    <p class="text-center text-5xl font-extrabold text-yellow-400 drop-shadow-xl">${sign} ${signData.emoji}</p>
+                    <hr class="border-gray-700" />
+                    <div class="p-4 bg-gray-900 rounded-lg shadow-inner">
+                        <h3 class="text-xl font-bold text-yellow-300 mb-2">${sign} Traits</h3>
+                        <p class="text-sm leading-relaxed">${signData.description}</p>
+                    </div>
                 </div>
             `;
         }
