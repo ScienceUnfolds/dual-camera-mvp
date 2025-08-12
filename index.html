@@ -4,15 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Astrology Tool</title>
-    <!-- Tailwind CSS CDN for styling -->
+    <!--
+        This script tag loads Tailwind CSS, a utility-first CSS framework.
+        We use it for all the styling (colors, layout, spacing, etc.).
+        This is a common way to quickly add modern styling to a web page.
+    -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons CDN for icons -->
+    <!--
+        This script loads Lucide Icons, which are a lightweight and modern icon set.
+        We use icons for the globe, calendar, clock, and map-pin to make the form more visually appealing.
+    -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
+            /* Sets the default font for the entire page */
             font-family: 'Inter', sans-serif;
         }
-        /* Custom styles for the spinner */
+        /* Defines the keyframes for the "spin" animation used for the loading spinner */
         @keyframes spin {
             from {
                 transform: rotate(0deg);
@@ -21,20 +29,33 @@
                 transform: rotate(360deg);
             }
         }
+        /* Applies the spin animation with a fast speed to an element with this class */
         .animate-spin-fast {
             animation: spin 0.7s linear infinite;
         }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
+    <!--
+        This is the main container for the app.
+        It's styled with a dark background, rounded corners, shadow, and centered on the page.
+    -->
     <div class="bg-gray-800 shadow-2xl rounded-xl p-8 max-w-lg w-full transform transition-all duration-300 hover:scale-105">
+        <!-- Main heading for the app -->
         <h1 class="text-4xl font-bold text-center mb-6 text-yellow-300">Astrology Tool</h1>
+        <!-- A short descriptive paragraph -->
         <p class="text-center text-gray-400 mb-8">Enter your birth details to discover your astrological chart.</p>
 
+        <!--
+            The main form for user input.
+            It has an ID for easy access in JavaScript and uses Tailwind classes for spacing.
+        -->
         <form id="astrology-form" class="space-y-6">
+            <!-- Language selection dropdown -->
             <div class="relative">
                 <label for="language" class="block text-sm font-medium text-gray-400 mb-2">Language</label>
                 <div class="relative">
+                    <!-- Globe icon for the language dropdown, styled with Lucide -->
                     <i data-lucide="globe" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
                     <select
                         id="language"
@@ -45,9 +66,11 @@
                     </select>
                 </div>
             </div>
+            <!-- Date of Birth input field -->
             <div class="relative">
                 <label for="birth-date" class="block text-sm font-medium text-gray-400 mb-2">Date of Birth</label>
                 <div class="relative">
+                    <!-- Calendar icon -->
                     <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
                     <input
                         type="date"
@@ -57,10 +80,11 @@
                     />
                 </div>
             </div>
-            
+            <!-- Time of Birth input field -->
             <div class="relative">
                 <label for="birth-time" class="block text-sm font-medium text-gray-400 mb-2">Time of Birth</label>
                 <div class="relative">
+                    <!-- Clock icon -->
                     <i data-lucide="clock" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
                     <input
                         type="time"
@@ -70,10 +94,11 @@
                     />
                 </div>
             </div>
-            
+            <!-- City/Location input field -->
             <div class="relative">
                 <label for="birth-location" class="block text-sm font-medium text-gray-400 mb-2">City/Location</label>
                 <div class="relative">
+                    <!-- Map pin icon -->
                     <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
                     <input
                         type="text"
@@ -84,27 +109,38 @@
                     />
                 </div>
             </div>
-            
+            <!-- Submit button to trigger the astrology calculation -->
             <button
                 type="submit"
                 id="submit-btn"
                 class="w-full flex items-center justify-center space-x-2 py-3 px-6 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-md hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
             >
+                <!-- Search icon for the button -->
                 <i data-lucide="search" size="20" class="search-icon"></i>
                 <span id="button-text">Get My Astrology Details</span>
             </button>
         </form>
 
+        <!--
+            This container will hold the results after the form is submitted.
+            It is initially hidden with the 'hidden' class.
+        -->
         <div id="results-container" class="mt-8 p-6 bg-gray-900 rounded-xl shadow-inner border border-gray-700 hidden">
-            <!-- Results will be dynamically inserted here -->
+            <!-- Results will be dynamically inserted here by the JavaScript code -->
         </div>
     </div>
 
+    <!--
+        ========================================
+        JavaScript section starts here
+        ========================================
+    -->
     <script>
-        // Lucide icons setup
+        // Initializes Lucide icons, so they are rendered as SVGs on the page.
         lucide.createIcons();
 
-        // Get elements from the DOM
+        // Fetches all the necessary HTML elements using their unique IDs.
+        // This makes it easy to manipulate them later in the code.
         const form = document.getElementById('astrology-form');
         const languageSelect = document.getElementById('language');
         const birthDateInput = document.getElementById('birth-date');
@@ -114,7 +150,8 @@
         const buttonText = document.getElementById('button-text');
         const resultsContainer = document.getElementById('results-container');
 
-        // Translations for dynamic text
+        // This object stores all the text strings for the app in different languages.
+        // This makes the app easily translatable by simply adding more language keys.
         const translations = {
             en: {
                 button: 'Get My Astrology Details',
@@ -124,6 +161,7 @@
                 ascendant: 'Ascendant:',
                 houseDetails: 'House Details:',
                 planetPositions: 'Planet Positions:',
+                annualRashifal: 'Annual Rashifal (Horoscope):'
             },
             ne: {
                 button: 'मेरो ज्योतिष विवरण प्राप्त गर्नुहोस्',
@@ -133,28 +171,40 @@
                 ascendant: 'लग्न:',
                 houseDetails: 'घरको विवरण:',
                 planetPositions: 'ग्रहको स्थिति:',
+                annualRashifal: 'वार्षिक राशिफल:'
             }
         };
         
-        // Function to update button text based on language
+        // Function to update the text on the submit button based on the selected language.
         const updateButtonText = () => {
             buttonText.textContent = translations[languageSelect.value].button;
         };
 
-        // Event listener for language change
+        // This event listener waits for the language dropdown value to change.
+        // When it changes, the updateButtonText function is called.
         languageSelect.addEventListener('change', updateButtonText);
-        updateButtonText(); // Initial call to set text on load
+        updateButtonText(); // Call the function once when the page loads to set the initial text.
 
-        // Function to handle form submission
+        // This is the main function that runs when the form is submitted.
         form.addEventListener('submit', async (e) => {
+            // e.preventDefault() stops the form from reloading the page,
+            // which is the default browser behavior.
             e.preventDefault();
 
-            // Show loading state
+            // ===================================
+            // Start of the loading state
+            // ===================================
+
+            // Disable the button to prevent multiple submissions.
             submitBtn.disabled = true;
+            // Clear the button text.
             buttonText.textContent = '';
+            // Insert the SVG code for the loading spinner into the button.
             submitBtn.innerHTML = '<svg class="animate-spin-fast h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            // Hide the results container from the previous submission, if any.
             resultsContainer.classList.add('hidden');
 
+            // Get the values from the form inputs.
             const birthDate = birthDateInput.value;
             const birthTime = birthTimeInput.value;
             const birthLocation = birthLocationInput.value;
@@ -163,11 +213,16 @@
             console.log('Fetching astrological details for:', { birthDate, birthTime, birthLocation, language });
 
             try {
-                // Simulate an API call with a delay.
+                // ===================================
+                // Mock API Call
+                // ===================================
+                // This simulates a real API call to an astrology service.
+                // It waits for 2 seconds to give the user a sense of a real loading process.
                 await new Promise(resolve => setTimeout(resolve, 2000));
 
-                // This is mock data that changes based on the selected language.
-                // In a real app, the API would return the correct text based on the `language` parameter.
+                // This is a placeholder object. In a real app, this data would come
+                // from an actual API call, and it would be specific to the user's details.
+                // Here, we just switch between English and Nepali mock data.
                 const mockDetails = language === 'ne'
                     ? {
                         sunSign: 'कन्या राशि',
@@ -175,6 +230,7 @@
                         ascendant: 'धनु राशि',
                         houseDetails: 'तपाईको धनु राशिमा रहेको लग्नले तपाईलाई स्वतन्त्रता र साहसको लागि बलियो इच्छा दिन्छ...',
                         planetPositions: 'सूर्य कन्या राशिमा ($20^\circ$), चन्द्रमा वृश्चिक राशिमा ($5^\circ$), बुध तुला राशिमा ($12^\circ$)...',
+                        annualRashifal: 'यो वर्ष तपाईंको लागि नयाँ अवसरहरूले भरिएको हुनेछ। करियरमा प्रगति हुनेछ र आर्थिक स्थितिमा सुधार हुनेछ। प्रेम सम्बन्धमा केही चुनौतीहरू आउन सक्छन्, तर धैर्यताले सबै कुरा समाधान हुनेछ।'
                     }
                     : {
                         sunSign: 'Virgo',
@@ -182,29 +238,41 @@
                         ascendant: 'Sagittarius',
                         houseDetails: 'Your Ascendant in Sagittarius gives you a strong desire for freedom and adventure...',
                         planetPositions: 'Sun in Virgo ($20^\circ$), Moon in Scorpio ($5^\circ$), Mercury in Libra ($12^\circ$)...',
+                        annualRashifal: 'This year will be filled with new opportunities for you. There will be progress in your career and an improvement in your financial situation. Love relationships may face some challenges, but patience will resolve everything.'
                     };
 
-                // Display results
+                // Once the "data" is received, call the function to display it.
                 displayResults(mockDetails, language);
 
             } catch (error) {
+                // If an error occurs during the "API call", this block will run.
                 console.error('Error fetching astrology details:', error);
-                // Display an error message to the user
+                // Make the results container visible to show the error.
                 resultsContainer.classList.remove('hidden');
                 resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred. Please try again.</p>`;
             } finally {
-                // Reset loading state
+                // ===================================
+                // End of the loading state
+                // ===================================
+
+                // Re-enable the button.
                 submitBtn.disabled = false;
+                // Update the button text to the correct language.
                 updateButtonText();
-                // Replace the spinner with the search icon
+                // Replace the spinner SVG with the original search icon.
                 submitBtn.innerHTML = `<i data-lucide="search" size="20" class="search-icon"></i><span id="button-text">${translations[language].button}</span>`;
-                lucide.createIcons(); // Re-render icons
+                // Re-render the icons to make sure the search icon appears.
+                lucide.createIcons();
             }
         });
 
+        // This function takes the astrological data and the language,
+        // then generates the HTML to display the results in the results container.
         function displayResults(details, language) {
-            const t = translations[language];
-            resultsContainer.classList.remove('hidden');
+            const t = translations[language]; // Gets the correct translation object
+            resultsContainer.classList.remove('hidden'); // Makes the results container visible
+            // Sets the inner HTML of the results container using a template literal.
+            // This allows us to easily insert variables like `t.title` and `details.sunSign`.
             resultsContainer.innerHTML = `
                 <h2 class="text-2xl font-bold mb-4 text-center text-yellow-300">${t.title}</h2>
                 <div class="space-y-4 text-gray-300">
@@ -213,6 +281,9 @@
                     <p><strong>${t.ascendant}</strong> <span class="font-semibold text-yellow-200">${details.ascendant}</span></p>
                     <p><strong>${t.houseDetails}</strong> ${details.houseDetails}</p>
                     <p><strong>${t.planetPositions}</strong> ${details.planetPositions}</p>
+                    <hr class="border-gray-700 my-4" />
+                    <h3 class="text-xl font-bold text-yellow-300">${t.annualRashifal}</h3>
+                    <p>${details.annualRashifal}</p>
                 </div>
             `;
         }
