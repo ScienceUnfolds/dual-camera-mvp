@@ -86,19 +86,6 @@
     </div>
 
     <script>
-        const API_KEY = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
-        
-        // --- DOM Elements ---
-        const form = document.getElementById('astrology-form');
-        const nameInput = document.getElementById('name');
-        const dateInput = document.getElementById('birthDate');
-        const timeInput = document.getElementById('birthTime');
-        const placeInput = document.getElementById('birthPlace');
-        const submitButton = document.getElementById('submit-button');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const resultsContainer = document.getElementById('results-container');
-        const errorMessage = document.getElementById('error-message');
-
         // --- API Call Logic ---
         const getApiResponse = async (prompt) => {
             const makeApiCall = async (retries = 0) => {
@@ -130,8 +117,10 @@
                         }
                     }
                 };
-
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+                
+                // This is the key change. The API key is now provided by the environment.
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                 try {
                     const response = await fetch(apiUrl, {
@@ -164,16 +153,20 @@
             return makeApiCall();
         };
 
+        // --- DOM Elements ---
+        const form = document.getElementById('astrology-form');
+        const nameInput = document.getElementById('name');
+        const dateInput = document.getElementById('birthDate');
+        const timeInput = document.getElementById('birthTime');
+        const placeInput = document.getElementById('birthPlace');
+        const submitButton = document.getElementById('submit-button');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const resultsContainer = document.getElementById('results-container');
+        const errorMessage = document.getElementById('error-message');
+
         // --- Form Submission Handler ---
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            // Basic validation for API key
-            if (API_KEY === "YOUR_GEMINI_API_KEY_HERE" || API_KEY === "") {
-                errorMessage.textContent = 'Please provide a valid Gemini API key in the script.';
-                errorMessage.classList.remove('hidden');
-                return;
-            }
 
             // Reset state and show loading spinner
             resultsContainer.innerHTML = '';
@@ -248,7 +241,7 @@
             } catch (e) {
                 console.error('Error fetching chart data:', e);
                 // More detailed error message
-                errorMessage.textContent = `Failed to generate chart data. Check if your API key is valid and if the network request succeeded. Error details: ${e.message}`;
+                errorMessage.textContent = `Failed to generate chart data. Check your inputs and try again. Error details: ${e.message}`;
                 errorMessage.classList.remove('hidden');
             } finally {
                 loadingSpinner.classList.add('hidden');
