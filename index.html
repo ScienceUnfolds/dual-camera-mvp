@@ -85,22 +85,10 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        // --- IMPORTANT: Replace with your actual Gemini API Key ---
+        const API_KEY = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
         
-        // --- Firebase Initialisation ---
-        // These variables are provided by the canvas environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        getFirestore(app);
-
         // --- DOM Elements ---
         const form = document.getElementById('astrology-form');
         const nameInput = document.getElementById('name');
@@ -114,16 +102,6 @@
 
         // --- API Call Logic ---
         const getApiResponse = async (prompt) => {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (e) {
-                console.error("Firebase Auth error:", e);
-            }
-
             const makeApiCall = async (retries = 0) => {
                 const chatHistory = [{
                     role: "user",
@@ -154,8 +132,7 @@
                     }
                 };
 
-                const apiKey = ''; // Provided by the environment
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
 
                 try {
                     const response = await fetch(apiUrl, {
@@ -192,6 +169,13 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            // Basic validation for API key
+            if (API_KEY === "YOUR_GEMINI_API_KEY_HERE" || API_KEY === "") {
+                errorMessage.textContent = 'Please provide a valid Gemini API key in the script.';
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
             // Reset state and show loading spinner
             resultsContainer.innerHTML = '';
             errorMessage.textContent = '';
@@ -266,7 +250,7 @@
 
             } catch (e) {
                 console.error('Error fetching chart data:', e);
-                errorMessage.textContent = 'Failed to generate chart data. Please check your inputs and try again.';
+                errorMessage.textContent = `Failed to generate chart data. Error: ${e.message}. Please check your API key and try again.`;
                 errorMessage.classList.remove('hidden');
             } finally {
                 loadingSpinner.classList.add('hidden');
