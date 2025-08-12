@@ -1,162 +1,221 @@
-import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Search, Globe } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Astrology Tool</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN for icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for the spinner */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .animate-spin-fast {
+            animation: spin 0.7s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
+    <div class="bg-gray-800 shadow-2xl rounded-xl p-8 max-w-lg w-full transform transition-all duration-300 hover:scale-105">
+        <h1 class="text-4xl font-bold text-center mb-6 text-yellow-300">Astrology Tool</h1>
+        <p class="text-center text-gray-400 mb-8">Enter your birth details to discover your astrological chart.</p>
 
-const App = () => {
-  // State to hold the form data
-  const [birthDate, setBirthDate] = useState('');
-  const [birthTime, setBirthTime] = useState('');
-  const [birthLocation, setBirthLocation] = useState('');
-  const [astrologyDetails, setAstrologyDetails] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  // New state for language selection, defaulting to English
-  const [language, setLanguage] = useState('en');
-
-  // Function to handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setAstrologyDetails(null);
-
-    // This is where you would call an external astrology API.
-    // The API would take birthDate, birthTime, birthLocation, and language as inputs.
-    console.log('Fetching astrological details for:', { birthDate, birthTime, birthLocation, language });
-
-    try {
-      // Simulate an API call with a delay.
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // This is mock data that changes based on the selected language.
-      // In a real app, the API would return the correct text based on the `language` parameter.
-      const mockDetails = language === 'ne'
-        ? {
-            sunSign: 'कन्या राशि',
-            moonSign: 'वृश्चिक राशि',
-            ascendant: 'धनु राशि',
-            houseDetails: 'तपाईको धनु राशिमा रहेको लग्नले तपाईलाई स्वतन्त्रता र साहसको लागि बलियो इच्छा दिन्छ...',
-            planetPositions: 'सूर्य कन्या राशिमा ($20^\circ$), चन्द्रमा वृश्चिक राशिमा ($5^\circ$), बुध तुला राशिमा ($12^\circ$)...',
-          }
-        : {
-            sunSign: 'Virgo',
-            moonSign: 'Scorpio',
-            ascendant: 'Sagittarius',
-            houseDetails: 'Your Ascendant in Sagittarius gives you a strong desire for freedom and adventure...',
-            planetPositions: 'Sun in Virgo ($20^\circ$), Moon in Scorpio ($5^\circ$), Mercury in Libra ($12^\circ$)...',
-          };
-
-      setAstrologyDetails(mockDetails);
-
-    } catch (error) {
-      console.error('Error fetching astrology details:', error);
-      // You would handle the error gracefully here, perhaps by displaying an error message to the user.
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4 font-sans">
-      <div className="bg-gray-800 shadow-2xl rounded-xl p-8 max-w-lg w-full transform transition-all duration-300 hover:scale-105">
-        <h1 className="text-4xl font-bold text-center mb-6 text-yellow-300">Astrology Tool</h1>
-        <p className="text-center text-gray-400 mb-8">Enter your birth details to discover your astrological chart.</p>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="relative">
-            <label htmlFor="language" className="block text-sm font-medium text-gray-400 mb-2">Language</label>
-            <div className="relative">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size={20} />
-              <select
-                id="language"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-              >
-                <option value="en">English</option>
-                <option value="ne">नेपाली (Nepali)</option>
-              </select>
+        <form id="astrology-form" class="space-y-6">
+            <div class="relative">
+                <label for="language" class="block text-sm font-medium text-gray-400 mb-2">Language</label>
+                <div class="relative">
+                    <i data-lucide="globe" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
+                    <select
+                        id="language"
+                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+                    >
+                        <option value="en">English</option>
+                        <option value="ne">नेपाली (Nepali)</option>
+                    </select>
+                </div>
             </div>
-          </div>
-          <div className="relative">
-            <label htmlFor="birth-date" className="block text-sm font-medium text-gray-400 mb-2">Date of Birth</label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size={20} />
-              <input
-                type="date"
-                id="birth-date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                required
-                className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-              />
+            <div class="relative">
+                <label for="birth-date" class="block text-sm font-medium text-gray-400 mb-2">Date of Birth</label>
+                <div class="relative">
+                    <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
+                    <input
+                        type="date"
+                        id="birth-date"
+                        required
+                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+                    />
+                </div>
             </div>
-          </div>
-          
-          <div className="relative">
-            <label htmlFor="birth-time" className="block text-sm font-medium text-gray-400 mb-2">Time of Birth</label>
-            <div className="relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size={20} />
-              <input
-                type="time"
-                id="birth-time"
-                value={birthTime}
-                onChange={(e) => setBirthTime(e.target.value)}
-                required
-                className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-              />
+            
+            <div class="relative">
+                <label for="birth-time" class="block text-sm font-medium text-gray-400 mb-2">Time of Birth</label>
+                <div class="relative">
+                    <i data-lucide="clock" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
+                    <input
+                        type="time"
+                        id="birth-time"
+                        required
+                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+                    />
+                </div>
             </div>
-          </div>
-          
-          <div className="relative">
-            <label htmlFor="birth-location" className="block text-sm font-medium text-gray-400 mb-2">City/Location</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size={20} />
-              <input
-                type="text"
-                id="birth-location"
-                placeholder="e.g., New York, NY"
-                value={birthLocation}
-                onChange={(e) => setBirthLocation(e.target.value)}
-                required
-                className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-              />
+            
+            <div class="relative">
+                <label for="birth-location" class="block text-sm font-medium text-gray-400 mb-2">City/Location</label>
+                <div class="relative">
+                    <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
+                    <input
+                        type="text"
+                        id="birth-location"
+                        placeholder="e.g., New York, NY"
+                        required
+                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+                    />
+                </div>
             </div>
-          </div>
-          
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center space-x-2 py-3 px-6 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-md hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <svg className="animate-spin h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            ) : (
-              <>
-                <Search size={20} />
-                <span>{language === 'ne' ? 'मेरो ज्योतिष विवरण प्राप्त गर्नुहोस्' : 'Get My Astrology Details'}</span>
-              </>
-            )}
-          </button>
+            
+            <button
+                type="submit"
+                id="submit-btn"
+                class="w-full flex items-center justify-center space-x-2 py-3 px-6 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-md hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
+            >
+                <i data-lucide="search" size="20" class="search-icon"></i>
+                <span id="button-text">Get My Astrology Details</span>
+            </button>
         </form>
 
-        {astrologyDetails && (
-          <div className="mt-8 p-6 bg-gray-900 rounded-xl shadow-inner border border-gray-700">
-            <h2 className="text-2xl font-bold mb-4 text-center text-yellow-300">
-              {language === 'ne' ? 'तपाईको ज्योतिषीय प्रोफाइल' : 'Your Astrological Profile'}
-            </h2>
-            <div className="space-y-4 text-gray-300">
-              <p><strong>{language === 'ne' ? 'सूर्य राशि:' : 'Sun Sign:'}</strong> <span className="font-semibold text-yellow-200">{astrologyDetails.sunSign}</span></p>
-              <p><strong>{language === 'ne' ? 'चन्द्र राशि:' : 'Moon Sign:'}</strong> <span className="font-semibold text-yellow-200">{astrologyDetails.moonSign}</span></p>
-              <p><strong>{language === 'ne' ? 'लग्न:' : 'Ascendant:'}</strong> <span className="font-semibold text-yellow-200">{astrologyDetails.ascendant}</span></p>
-              <p><strong>{language === 'ne' ? 'घरको विवरण:' : 'House Details:'}</strong> {astrologyDetails.houseDetails}</p>
-              <p><strong>{language === 'ne' ? 'ग्रहको स्थिति:' : 'Planet Positions:'}</strong> {astrologyDetails.planetPositions}</p>
-            </div>
-          </div>
-        )}
-      </div>
+        <div id="results-container" class="mt-8 p-6 bg-gray-900 rounded-xl shadow-inner border border-gray-700 hidden">
+            <!-- Results will be dynamically inserted here -->
+        </div>
     </div>
-  );
-};
 
-export default App;
+    <script>
+        // Lucide icons setup
+        lucide.createIcons();
+
+        // Get elements from the DOM
+        const form = document.getElementById('astrology-form');
+        const languageSelect = document.getElementById('language');
+        const birthDateInput = document.getElementById('birth-date');
+        const birthTimeInput = document.getElementById('birth-time');
+        const birthLocationInput = document.getElementById('birth-location');
+        const submitBtn = document.getElementById('submit-btn');
+        const buttonText = document.getElementById('button-text');
+        const resultsContainer = document.getElementById('results-container');
+
+        // Translations for dynamic text
+        const translations = {
+            en: {
+                button: 'Get My Astrology Details',
+                title: 'Your Astrological Profile',
+                sunSign: 'Sun Sign:',
+                moonSign: 'Moon Sign:',
+                ascendant: 'Ascendant:',
+                houseDetails: 'House Details:',
+                planetPositions: 'Planet Positions:',
+            },
+            ne: {
+                button: 'मेरो ज्योतिष विवरण प्राप्त गर्नुहोस्',
+                title: 'तपाईको ज्योतिषीय प्रोफाइल',
+                sunSign: 'सूर्य राशि:',
+                moonSign: 'चन्द्र राशि:',
+                ascendant: 'लग्न:',
+                houseDetails: 'घरको विवरण:',
+                planetPositions: 'ग्रहको स्थिति:',
+            }
+        };
+        
+        // Function to update button text based on language
+        const updateButtonText = () => {
+            buttonText.textContent = translations[languageSelect.value].button;
+        };
+
+        // Event listener for language change
+        languageSelect.addEventListener('change', updateButtonText);
+        updateButtonText(); // Initial call to set text on load
+
+        // Function to handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Show loading state
+            submitBtn.disabled = true;
+            buttonText.textContent = '';
+            submitBtn.innerHTML = '<svg class="animate-spin-fast h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            resultsContainer.classList.add('hidden');
+
+            const birthDate = birthDateInput.value;
+            const birthTime = birthTimeInput.value;
+            const birthLocation = birthLocationInput.value;
+            const language = languageSelect.value;
+            
+            console.log('Fetching astrological details for:', { birthDate, birthTime, birthLocation, language });
+
+            try {
+                // Simulate an API call with a delay.
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // This is mock data that changes based on the selected language.
+                // In a real app, the API would return the correct text based on the `language` parameter.
+                const mockDetails = language === 'ne'
+                    ? {
+                        sunSign: 'कन्या राशि',
+                        moonSign: 'वृश्चिक राशि',
+                        ascendant: 'धनु राशि',
+                        houseDetails: 'तपाईको धनु राशिमा रहेको लग्नले तपाईलाई स्वतन्त्रता र साहसको लागि बलियो इच्छा दिन्छ...',
+                        planetPositions: 'सूर्य कन्या राशिमा ($20^\circ$), चन्द्रमा वृश्चिक राशिमा ($5^\circ$), बुध तुला राशिमा ($12^\circ$)...',
+                    }
+                    : {
+                        sunSign: 'Virgo',
+                        moonSign: 'Scorpio',
+                        ascendant: 'Sagittarius',
+                        houseDetails: 'Your Ascendant in Sagittarius gives you a strong desire for freedom and adventure...',
+                        planetPositions: 'Sun in Virgo ($20^\circ$), Moon in Scorpio ($5^\circ$), Mercury in Libra ($12^\circ$)...',
+                    };
+
+                // Display results
+                displayResults(mockDetails, language);
+
+            } catch (error) {
+                console.error('Error fetching astrology details:', error);
+                // Display an error message to the user
+                resultsContainer.classList.remove('hidden');
+                resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred. Please try again.</p>`;
+            } finally {
+                // Reset loading state
+                submitBtn.disabled = false;
+                updateButtonText();
+                // Replace the spinner with the search icon
+                submitBtn.innerHTML = `<i data-lucide="search" size="20" class="search-icon"></i><span id="button-text">${translations[language].button}</span>`;
+                lucide.createIcons(); // Re-render icons
+            }
+        });
+
+        function displayResults(details, language) {
+            const t = translations[language];
+            resultsContainer.classList.remove('hidden');
+            resultsContainer.innerHTML = `
+                <h2 class="text-2xl font-bold mb-4 text-center text-yellow-300">${t.title}</h2>
+                <div class="space-y-4 text-gray-300">
+                    <p><strong>${t.sunSign}</strong> <span class="font-semibold text-yellow-200">${details.sunSign}</span></p>
+                    <p><strong>${t.moonSign}</strong> <span class="font-semibold text-yellow-200">${details.moonSign}</span></p>
+                    <p><strong>${t.ascendant}</strong> <span class="font-semibold text-yellow-200">${details.ascendant}</span></p>
+                    <p><strong>${t.houseDetails}</strong> ${details.houseDetails}</p>
+                    <p><strong>${t.planetPositions}</strong> ${details.planetPositions}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
