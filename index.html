@@ -1,1014 +1,252 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Astrology Tool</title>
-    <!--
-        This script tag loads Tailwind CSS, a utility-first CSS framework.
-        We use it for all the styling (colors, layout, spacing, etc.).
-    -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!--
-        This script loads Lucide Icons, which are a lightweight and modern icon set.
-        We use icons for the form fields to make the interface more visually appealing.
-    -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body {
-            /* Sets the default font for the entire page */
-            font-family: 'Inter', sans-serif;
-            background-image: url('https://placehold.co/1920x1080/0d1117/e5e7eb?text=Starry+Background');
-            background-size: cover;
-            background-position: center;
-        }
-        /* Defines the keyframes for the "spin" animation used for the loading spinner */
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        /* Applies the spin animation with a fast speed to an element with this class */
-        .animate-spin-fast {
-            animation: spin 0.7s linear infinite;
-        }
-        /* Style for the accordion sections */
-        .accordion-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-        .accordion-content.open {
-            max-height: 1000px; /* A large value to allow content to expand */
-            transition: max-height 0.5s ease-in;
-        }
-    </style>
-</head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
-    <!--
-        This is the main container for the app.
-        It's styled with a dark background, rounded corners, shadow, and centered on the page.
-    -->
-    <div class="bg-gray-800 shadow-2xl rounded-xl p-8 max-w-lg w-full transform transition-all duration-300 hover:scale-105">
-        <!-- Main heading for the app -->
-        <h1 class="text-4xl font-bold text-center mb-6 text-yellow-300">Astrology Tool</h1>
-        <!-- A short descriptive paragraph -->
-        <p class="text-center text-gray-400 mb-8">Enter your birth details to discover your astrological chart.</p>
+import { useState } from 'react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
-        <!--
-            The main form for user input.
-            It has an ID for easy access in JavaScript and uses Tailwind classes for spacing.
-        -->
-        <form id="astrology-form" class="space-y-6">
-             <!-- Language selection dropdown -->
-            <div class="relative">
-                <label for="language" class="block text-sm font-medium text-gray-400 mb-2">Language</label>
-                <div class="relative">
-                    <!-- Globe icon for the language dropdown, styled with Lucide -->
-                    <i data-lucide="globe" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
-                    <select
-                        id="language"
-                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-                    >
-                        <option value="en">English</option>
-                        <option value="ne">नेपाली (Nepali)</option>
-                        <option value="hi">हिंदी (Hindi)</option>
-                        <option value="ta">தமிழ் (Tamil)</option>
-                        <option value="bn">বাংলা (Bengali)</option>
-                        <option value="new">नेवारी (Newari)</option>
-                    </select>
-                </div>
+const App = () => {
+  const [name, setName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [birthTime, setBirthTime] = useState('');
+  const [birthPlace, setBirthPlace] = useState('');
+  const [chartData, setChartData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Firebase initialisation & auth (required for API calls in the environment)
+  // These variables are provided by the canvas environment
+  const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+  const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  getFirestore(app);
+
+  const getApiResponse = async (prompt) => {
+    try {
+      if (initialAuthToken) {
+        await signInWithCustomToken(auth, initialAuthToken);
+      } else {
+        await signInAnonymously(auth);
+      }
+    } catch (e) {
+      console.error("Firebase Auth error:", e);
+      // Continue even if auth fails, the API key might be enough.
+    }
+
+    // Exponential backoff for API calls
+    const makeApiCall = async (retries = 0) => {
+      const chatHistory = [{
+        role: "user",
+        parts: [{ text: prompt }]
+      }];
+
+      const payload = {
+        contents: chatHistory,
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              rashi: { type: "STRING" },
+              lagna: { type: "STRING" },
+              planetary_positions: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    planet: { type: "STRING" },
+                    position: { type: "STRING" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      };
+
+      const apiKey = ''; // Provided by the environment
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`API call failed: ${response.status} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        const jsonString = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        return JSON.parse(jsonString);
+
+      } catch (e) {
+        if (e.message.includes('429') && retries < 5) {
+          const delay = Math.pow(2, retries) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return makeApiCall(retries + 1);
+        }
+        throw e;
+      }
+    };
+    return makeApiCall();
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setChartData(null);
+    setError('');
+
+    const prompt = `Act as a professional Vedic astrologer. I will provide you with a person's name, date of birth, time of birth, and place of birth. Based on this information, please calculate and provide the following details in a JSON object:
+      1.  **Rashi (Moon Sign):** The sign the Moon was in at the time of birth.
+      2.  **Lagna (Ascendant):** The sign rising on the eastern horizon at the time of birth.
+      3.  **Planetary Positions:** A list of the major planets (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn) and the sign they were in at the time of birth.
+
+      Please provide the output in a single, valid JSON object with the following structure:
+      {
+        "rashi": "...",
+        "lagna": "...",
+        "planetary_positions": [
+          {"planet": "Sun", "position": "..."},
+          ...
+        ]
+      }
+
+      Here are the birth details:
+      Name: ${name}
+      Date of Birth: ${birthDate}
+      Time of Birth: ${birthTime}
+      Place of Birth: ${birthPlace}
+      `;
+
+    try {
+      const data = await getApiResponse(prompt);
+      setChartData(data);
+    } catch (e) {
+      console.error('Error fetching chart data:', e);
+      setError('Failed to generate chart data. Please check your inputs and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderData = () => {
+    if (!chartData) return null;
+
+    return (
+      <div className="mt-8 p-6 bg-white rounded-xl shadow-lg">
+        <h3 className="text-2xl font-bold text-gray-800 mb-4">Astrological Overview for {name}</h3>
+        <p className="text-gray-600 mb-4">
+          This chart has been generated based on your birth details using a large language model with extensive astrological knowledge.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <p className="text-lg font-semibold text-gray-700">Rashi (Moon Sign):</p>
+            <p className="text-xl font-bold text-indigo-600">{chartData.rashi}</p>
+          </div>
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <p className="text-lg font-semibold text-gray-700">Lagna (Ascendant):</p>
+            <p className="text-xl font-bold text-indigo-600">{chartData.lagna}</p>
+          </div>
+        </div>
+        <div className="mt-6">
+          <p className="text-xl font-bold text-gray-800 mb-2">Planetary Positions:</p>
+          <ul className="space-y-2">
+            {chartData.planetary_positions.map((item, index) => (
+              <li key={index} className="bg-gray-50 p-3 rounded-md shadow-sm">
+                <span className="font-semibold text-gray-700">{item.planet}:</span>{' '}
+                <span className="font-medium text-gray-900">{item.position}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6 lg:p-8 font-sans">
+      <div className="w-full max-w-2xl bg-gray-50 rounded-2xl shadow-xl p-6 sm:p-8">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-indigo-700">
+            Astrology Chart Generator
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base">
+            Enter your birth details to generate your chart.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">Date of Birth</label>
+              <input
+                type="date"
+                id="birthDate"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                required
+              />
             </div>
-            <!-- Person Name input field -->
-            <div class="relative">
-                <label for="person-name" class="block text-sm font-medium text-gray-400 mb-2">Your Name</label>
-                <input
-                    type="text"
-                    id="person-name"
-                    placeholder="e.g., John Doe"
-                    required
-                    class="w-full pl-4 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-                />
+            <div>
+              <label htmlFor="birthTime" className="block text-sm font-medium text-gray-700">Time of Birth</label>
+              <input
+                type="time"
+                id="birthTime"
+                value={birthTime}
+                onChange={(e) => setBirthTime(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                required
+              />
             </div>
-            <!-- Date of Birth input field -->
-            <div class="relative">
-                <label for="birth-date" class="block text-sm font-medium text-gray-400 mb-2">Date of Birth</label>
-                <div class="relative">
-                    <!-- Calendar icon -->
-                    <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
-                    <input
-                        type="date"
-                        id="birth-date"
-                        required
-                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-                    />
-                </div>
-            </div>
-            <!-- Time of Birth input field -->
-            <div class="relative">
-                <label for="birth-time" class="block text-sm font-medium text-gray-400 mb-2">Time of Birth</label>
-                <div class="relative">
-                    <!-- Clock icon -->
-                    <i data-lucide="clock" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
-                    <input
-                        type="time"
-                        id="birth-time"
-                        required
-                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-                    />
-                </div>
-            </div>
-            <!-- City/Location input field -->
-            <div class="relative">
-                <label for="birth-location" class="block text-sm font-medium text-gray-400 mb-2">City/Location</label>
-                <div class="relative">
-                    <!-- Map pin icon -->
-                    <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
-                    <input
-                        type="text"
-                        id="birth-location"
-                        placeholder="e.g., New York, NY"
-                        required
-                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-                    />
-                </div>
-            </div>
-            <!-- Submit button to trigger the astrology calculation -->
-            <button
-                type="submit"
-                id="submit-btn"
-                class="w-full flex items-center justify-center space-x-2 py-3 px-6 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-md hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
-            >
-                <!-- Search icon for the button -->
-                <i data-lucide="search" size="20" class="search-icon"></i>
-                <span id="button-text">Get My Astrology Details</span>
-            </button>
+          </div>
+          <div>
+            <label htmlFor="birthPlace" className="block text-sm font-medium text-gray-700">Place of Birth</label>
+            <input
+              type="text"
+              id="birthPlace"
+              value={birthPlace}
+              onChange={(e) => setBirthPlace(e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder="e.g., New York, NY"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${loading ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'}`}
+            disabled={loading}
+          >
+            {loading ? (
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : 'Generate My Chart'}
+          </button>
         </form>
 
-        <!--
-            This container will hold the results after the form is submitted.
-            It is initially hidden with the 'hidden' class.
-            This now contains the accordion structure.
-        -->
-        <div id="results-container" class="mt-8 p-6 bg-gray-900 rounded-xl shadow-inner border border-gray-700 hidden">
-            <h2 id="results-title" class="text-2xl font-bold mb-4 text-center text-yellow-300"></h2>
-            
-            <!-- Basic Profile Section -->
-            <div id="basic-profile-section" class="space-y-4 text-gray-300 mb-4">
-                <!-- Basic profile details will be inserted here -->
-            </div>
-            
-            <!-- Accordion container -->
-            <div id="accordion-container" class="space-y-4">
-                <!-- Daily Horoscope Accordion -->
-                <div class="bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                    <button class="accordion-header w-full flex justify-between items-center p-4 text-left font-bold text-lg text-yellow-300 hover:bg-gray-700 transition-colors duration-200">
-                        <span id="daily-horoscope-title"></span>
-                        <i data-lucide="chevron-down" class="chevron-icon transform transition-transform duration-300"></i>
-                    </button>
-                    <div id="daily-horoscope-content" class="accordion-content bg-gray-800 p-4 border-t border-gray-700">
-                        <!-- Content will be loaded dynamically -->
-                        <div id="daily-horoscope-loading" class="text-center text-gray-400 hidden">
-                             <svg class="animate-spin-fast h-6 w-6 mx-auto text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        </div>
-                        <div id="daily-horoscope-details"></div>
-                    </div>
-                </div>
-
-                <!-- Monthly & Annual Horoscope Accordion -->
-                <div class="bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                    <button class="accordion-header w-full flex justify-between items-center p-4 text-left font-bold text-lg text-yellow-300 hover:bg-gray-700 transition-colors duration-200">
-                        <span id="monthly-annual-title"></span>
-                        <i data-lucide="chevron-down" class="chevron-icon transform transition-transform duration-300"></i>
-                    </button>
-                    <div id="monthly-annual-content" class="accordion-content bg-gray-800 p-4 border-t border-gray-700">
-                        <!-- Content will be loaded dynamically -->
-                        <div id="monthly-annual-loading" class="text-center text-gray-400 hidden">
-                            <svg class="animate-spin-fast h-6 w-6 mx-auto text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        </div>
-                        <div id="monthly-annual-details"></div>
-                    </div>
-                </div>
-
-                <!-- Family & Relationship Accordion -->
-                <div class="bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                    <button class="accordion-header w-full flex justify-between items-center p-4 text-left font-bold text-lg text-yellow-300 hover:bg-gray-700 transition-colors duration-200">
-                        <span id="family-relationship-title"></span>
-                        <i data-lucide="chevron-down" class="chevron-icon transform transition-transform duration-300"></i>
-                    </button>
-                    <div id="family-relationship-content" class="accordion-content bg-gray-800 p-4 border-t border-gray-700">
-                        <!-- Content will be loaded dynamically -->
-                        <div id="family-relationship-loading" class="text-center text-gray-400 hidden">
-                            <svg class="animate-spin-fast h-6 w-6 mx-auto text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        </div>
-                        <div id="family-relationship-details"></div>
-                    </div>
-                </div>
-
-                <!-- Age-wise & Special Forecast Accordion -->
-                <div class="bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                    <button class="accordion-header w-full flex justify-between items-center p-4 text-left font-bold text-lg text-yellow-300 hover:bg-gray-700 transition-colors duration-200">
-                        <span id="age-wise-title"></span>
-                        <i data-lucide="chevron-down" class="chevron-icon transform transition-transform duration-300"></i>
-                    </button>
-                    <div id="age-wise-content" class="accordion-content bg-gray-800 p-4 border-t border-gray-700">
-                        <!-- Content will be loaded dynamically -->
-                        <div id="age-wise-loading" class="text-center text-gray-400 hidden">
-                            <svg class="animate-spin-fast h-6 w-6 mx-auto text-yellow-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        </div>
-                        <div id="age-wise-details"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+        {renderData()}
+      </div>
     </div>
+  );
+};
 
-    <!--
-        ========================================
-        JavaScript section starts here
-        ========================================
-    -->
-    <script>
-        // Initializes Lucide icons, so they are rendered as SVGs on the page.
-        lucide.createIcons();
-
-        // Fetches all the necessary HTML elements using their unique IDs.
-        const form = document.getElementById('astrology-form');
-        const languageSelect = document.getElementById('language');
-        const personNameInput = document.getElementById('person-name');
-        const birthDateInput = document.getElementById('birth-date');
-        const birthTimeInput = document.getElementById('birth-time');
-        const birthLocationInput = document.getElementById('birth-location');
-        const submitBtn = document.getElementById('submit-btn');
-        const buttonText = document.getElementById('button-text');
-        const resultsContainer = document.getElementById('results-container');
-        const resultsTitle = document.getElementById('results-title');
-        const basicProfileSection = document.getElementById('basic-profile-section');
-        const accordionHeaders = document.querySelectorAll('.accordion-header');
-
-        const dailyHoroscopeTitle = document.getElementById('daily-horoscope-title');
-        const monthlyAnnualTitle = document.getElementById('monthly-annual-title');
-        const familyRelationshipTitle = document.getElementById('family-relationship-title');
-        const ageWiseTitle = document.getElementById('age-wise-title');
-        
-        const dailyLoading = document.getElementById('daily-horoscope-loading');
-        const monthlyAnnualLoading = document.getElementById('monthly-annual-loading');
-        const familyLoading = document.getElementById('family-relationship-loading');
-        const ageWiseLoading = document.getElementById('age-wise-loading');
-
-        // This object stores all the text strings for the app in different languages.
-        const translations = {
-            en: {
-                button: 'Get My Astrology Details',
-                title: 'Your Astrological Profile',
-                hello: 'Hello',
-                sunSign: 'Sun Sign:',
-                moonSign: 'Moon Sign (Rashi):',
-                ascendant: 'Ascendant:',
-                houseDetails: 'House Details:',
-                planetPositions: 'Planet Positions:',
-                dailyHoroscope: 'Daily Horoscope & Forecast',
-                monthlyAnnual: 'Monthly & Annual Forecast',
-                familyRelationship: 'Family & Relationship Forecast',
-                ageWise: 'Age-wise & Special Forecast',
-                carefulAbout: 'Be Careful About:',
-                dailyPlanetImpact: 'Planetary Impact Today:',
-                dailyRelationship: 'Relationship Status Today:',
-                relationshipWithFather: 'Relationship with Father:',
-                relationshipWithMother: 'Relationship with Mother:',
-                relationshipWithSiblings: 'Relationship with Siblings:',
-                relationshipWithChildren: 'Relationship with Children:',
-                relationshipWithSpouse: 'Relationship with Spouse:',
-                dailyEconomicStatus: 'Economic Status Today:',
-                dailyHealthStatus: 'Health Status Today:',
-                ageWiseHoroscope: 'Age-wise Horoscope:',
-                monthlyHoroscope: 'Monthly Horoscope:',
-                annualHoroscope: 'Annual Horoscope:',
-                familySituation: 'Family Situation:',
-                familyMemberHoroscope: 'Horoscope for Family Members:',
-                loading: 'Loading...'
-            },
-            ne: {
-                button: 'मेरो ज्योतिष विवरण प्राप्त गर्नुहोस्',
-                title: 'तपाईको ज्योतिषीय प्रोफाइल',
-                hello: 'नमस्ते',
-                sunSign: 'सूर्य राशि:',
-                moonSign: 'चन्द्र राशि:',
-                ascendant: 'लग्न:',
-                houseDetails: 'घरको विवरण:',
-                planetPositions: 'ग्रहको स्थिति:',
-                dailyHoroscope: 'दैनिक राशिफल र पूर्वानुमान',
-                monthlyAnnual: 'मासिक र वार्षिक पूर्वानुमान',
-                familyRelationship: 'परिवार र सम्बन्ध पूर्वानुमान',
-                ageWise: 'उमेरअनुसार र विशेष पूर्वानुमान',
-                carefulAbout: 'यस बारे सावधान रहनुहोस्:',
-                dailyPlanetImpact: 'आजको ग्रहीय प्रभाव:',
-                dailyRelationship: 'आजको सम्बन्धको स्थिति:',
-                relationshipWithFather: 'बुवासँगको सम्बन्ध:',
-                relationshipWithMother: 'आमासँगको सम्बन्ध:',
-                relationshipWithSiblings: 'दाजुभाइ/दिदीबहिनीसँगको सम्बन्ध:',
-                relationshipWithChildren: 'सन्तानसँगको सम्बन्ध:',
-                relationshipWithSpouse: 'जीवनसाथीसँगको सम्बन्ध:',
-                dailyEconomicStatus: 'आजको आर्थिक स्थिति:',
-                dailyHealthStatus: 'आजको स्वास्थ्य स्थिति:',
-                ageWiseHoroscope: 'उमेरअनुसारको राशिफल:',
-                monthlyHoroscope: 'मासिक राशिफल:',
-                annualHoroscope: 'वार्षिक राशिफल:',
-                familySituation: 'पारिवारिक स्थिति:',
-                familyMemberHoroscope: 'परिवारका सदस्यहरूको राशिफल:',
-                loading: 'लोड हुँदैछ...'
-            },
-            hi: {
-                button: 'मेरी ज्योतिष विवरण प्राप्त करें',
-                title: 'आपकी ज्योतिषीय प्रोफाइल',
-                hello: 'नमस्ते',
-                sunSign: 'सूर्य राशि:',
-                moonSign: 'चंद्र राशि:',
-                ascendant: 'लग्न:',
-                houseDetails: 'घर का विवरण:',
-                planetPositions: 'ग्रहों की स्थिति:',
-                dailyHoroscope: 'दैनिक राशिफल और पूर्वानुमान',
-                monthlyAnnual: 'मासिक और वार्षिक पूर्वानुमान',
-                familyRelationship: 'परिवार और संबंध पूर्वानुमान',
-                ageWise: 'उम्र के अनुसार और विशेष पूर्वानुमान',
-                carefulAbout: 'इनके बारे में सावधान रहें:',
-                dailyPlanetImpact: 'आज का ग्रहीय प्रभाव:',
-                dailyRelationship: 'आज की संबंध स्थिति:',
-                relationshipWithFather: 'पिता के साथ संबंध:',
-                relationshipWithMother: 'मां के साथ संबंध:',
-                relationshipWithSiblings: 'भाई-बहनों के साथ संबंध:',
-                relationshipWithChildren: 'बच्चों के साथ संबंध:',
-                relationshipWithSpouse: 'जीवनसाथी के साथ संबंध:',
-                dailyEconomicStatus: 'आज की आर्थिक स्थिति:',
-                dailyHealthStatus: 'आज की स्वास्थ्य स्थिति:',
-                ageWiseHoroscope: 'उम्र के अनुसार राशिफल:',
-                monthlyHoroscope: 'मासिक राशिफल:',
-                annualHoroscope: 'वार्षिक राशिफल:',
-                familySituation: 'पारिवारिक स्थिति:',
-                familyMemberHoroscope: 'परिवार के सदस्यों का राशिफल:',
-                loading: 'लोड हो रहा है...'
-            },
-            ta: {
-                button: 'எனது ஜோதிட விவரங்களைப் பெறுங்கள்',
-                title: 'உங்கள் ஜோதிட விவரம்',
-                hello: 'வணக்கம்',
-                sunSign: 'சூரிய ராசி:',
-                moonSign: 'சந்திர ராசி:',
-                ascendant: 'லக்னம்:',
-                houseDetails: 'வீட்டு விவரங்கள்:',
-                planetPositions: 'கிரக நிலைகள்:',
-                dailyHoroscope: 'தினசரி ராசி பலன் & முன் கணிப்பு',
-                monthlyAnnual: 'மாதாந்திர & வருடாந்திர முன் கணிப்பு',
-                familyRelationship: 'குடும்பம் & உறவு முன் கணிப்பு',
-                ageWise: 'வயது வாரியான & சிறப்பு முன் கணிப்பு',
-                carefulAbout: 'இந்த விஷயங்களில் கவனமாக இருங்கள்:',
-                dailyPlanetImpact: 'இன்றைய கிரகங்களின் தாக்கம்:',
-                dailyRelationship: 'இன்றைய உறவு நிலை:',
-                relationshipWithFather: 'தந்தையிடமிருந்து உறவு:',
-                relationshipWithMother: 'தாயிடமிருந்து உறவு:',
-                relationshipWithSiblings: 'சகோதரர்களிடமிருந்து உறவு:',
-                relationshipWithChildren: 'குழந்தைகளிடமிருந்து உறவு:',
-                relationshipWithSpouse: 'துணையிடமிருந்து உறவு:',
-                dailyEconomicStatus: 'இன்றைய பொருளாதார நிலை:',
-                dailyHealthStatus: 'இன்றைய சுகாதார நிலை:',
-                ageWiseHoroscope: 'வயது வாரியான ராசி பலன்:',
-                monthlyHoroscope: 'மாதாந்திர ராசி பலன்:',
-                annualHoroscope: 'வருடாந்திர ராசி பலன்:',
-                familySituation: 'குடும்ப நிலை:',
-                familyMemberHoroscope: 'குடும்ப உறுப்பினர்களுக்கான ராசி பலன்:',
-                loading: 'ஏற்றுகிறது...'
-            },
-            bn: {
-                button: 'আমার জ্যোতিষ বিবরণ পান',
-                title: 'আপনার জ্যোতিষশাস্ত্রীয় প্রোফাইল',
-                hello: 'নমস্কার',
-                sunSign: 'সূর্য রাশি:',
-                moonSign: 'চন্দ্র রাশি:',
-                ascendant: 'লগ্ন:',
-                houseDetails: 'ঘরের বিবরণ:',
-                planetPositions: 'গ্রহের অবস্থান:',
-                dailyHoroscope: 'দৈনিক রাশিফল ​​ও পূর্বাভাস',
-                monthlyAnnual: 'মাসিক ও বার্ষিক পূর্বাভাস',
-                familyRelationship: 'পরিবার ও সম্পর্ক পূর্বাভাস',
-                ageWise: 'বয়স অনুযায়ী ও বিশেষ পূর্বাভাস',
-                carefulAbout: 'এই বিষয়গুলো সম্পর্কে সতর্ক থাকুন:',
-                dailyPlanetImpact: 'আজকের গ্রহের প্রভাব:',
-                dailyRelationship: 'আজকের সম্পর্কের অবস্থা:',
-                relationshipWithFather: 'বাবার সঙ্গে সম্পর্ক:',
-                relationshipWithMother: 'মায়ের সঙ্গে সম্পর্ক:',
-                relationshipWithSiblings: 'ভাইবোনদের সঙ্গে সম্পর্ক:',
-                relationshipWithChildren: 'সন্তানদের সঙ্গে সম্পর্ক:',
-                relationshipWithSpouse: 'জীবনসঙ্গীর সঙ্গে সম্পর্ক:',
-                dailyEconomicStatus: 'আজকের আর্থিক অবস্থা:',
-                dailyHealthStatus: 'আজকের স্বাস্থ্য অবস্থা:',
-                ageWiseHoroscope: 'বয়স অনুযায়ী রাশিফল:',
-                monthlyHoroscope: 'মাসিক রাশিফল:',
-                annualHoroscope: 'বার্ষিক রাশিফল:',
-                familySituation: 'পারিবারিক পরিস্থিতি:',
-                familyMemberHoroscope: 'পরিবারের সদস্যদের জন্য রাশিফল:',
-                loading: 'লোডিং হচ্ছে...'
-            },
-            new: { // Newari language
-                button: 'जिगु ज्योतिष विवरण काये',
-                title: 'छिगु ज्योतिषीय विवरण',
-                hello: 'ज्वजलपा',
-                sunSign: 'सूर्य राशि:',
-                moonSign: 'चन्द्र राशि:',
-                ascendant: 'लग्न:',
-                houseDetails: 'छेँया विवरण:',
-                planetPositions: 'ग्रहया स्थिति:',
-                dailyHoroscope: 'न्हिछिनिया राशिफल व भविष्यवाणी',
-                monthlyAnnual: 'लागिया व दँया भविष्यवाणी',
-                familyRelationship: 'छेँज्या व सम्बन्धया भविष्यवाणी',
-                ageWise: 'उमेरकथंया व विशेष भविष्यवाणी',
-                carefulAbout: 'थ्व खँ ल्वहँ ल्वाके:',
-                dailyPlanetImpact: 'थौंया ग्रहया प्रभाव:',
-                dailyRelationship: 'थौंया सम्बन्धया स्थिति:',
-                relationshipWithFather: 'अबुनाप सम्बन्ध:',
-                relationshipWithMother: 'अम्मानाप सम्बन्ध:',
-                relationshipWithSiblings: 'केहेँ/दाजुनाप सम्बन्ध:',
-                relationshipWithChildren: 'मचानाप सम्बन्ध:',
-                relationshipWithSpouse: 'जीवनसाथीनाप सम्बन्ध:',
-                dailyEconomicStatus: 'थौंया आर्थिक स्थिति:',
-                dailyHealthStatus: 'थौंया स्वास्थ्य स्थिति:',
-                ageWiseHoroscope: 'उमेरकथंया राशिफल:',
-                monthlyHoroscope: 'मासिक राशिफल:',
-                annualHoroscope: 'वार्षिक राशिफल:',
-                familySituation: 'पारिवारिक स्थिति:',
-                familyMemberHoroscope: 'परिवारया दुजःपिनिगु राशिफल:',
-                loading: 'लोड जुयाच्वंगु दु...'
-            }
-        };
-
-        // This object acts as a cache to store fetched data, so we don't re-fetch
-        // the same information multiple times.
-        const dataCache = {
-            'daily-horoscope': null,
-            'monthly-annual': null,
-            'family-relationship': null,
-            'age-wise': null
-        };
-        
-        // This object maps section IDs to their corresponding loading elements.
-        const loadingElements = {
-            'daily-horoscope': dailyLoading,
-            'monthly-annual': monthlyAnnualLoading,
-            'family-relationship': familyLoading,
-            'age-wise': ageWiseLoading,
-        };
-
-        // Function to update the text on the submit button based on the selected language.
-        const updateLanguageUI = () => {
-            const lang = languageSelect.value;
-            const t = translations[lang];
-            buttonText.textContent = t.button;
-            dailyHoroscopeTitle.textContent = t.dailyHoroscope;
-            monthlyAnnualTitle.textContent = t.monthlyAnnual;
-            familyRelationshipTitle.textContent = t.familyRelationship;
-            ageWiseTitle.textContent = t.ageWise;
-        };
-
-        // This event listener waits for the language dropdown value to change.
-        languageSelect.addEventListener('change', updateLanguageUI);
-        updateLanguageUI(); // Call the function once when the page loads to set the initial text.
-        
-        /**
-         * Extracts a valid JSON string from a potentially malformed API response.
-         * @param {string} responseText The raw text response from the API.
-         * @returns {string|null} The cleaned JSON string or null if not found.
-         */
-        const extractJsonFromResponse = (responseText) => {
-            const jsonRegex = /```json\s*([\s\S]*?)\s*```|({[\s\S]*})/;
-            const match = responseText.match(jsonRegex);
-
-            if (match && match[1]) {
-                return match[1];
-            } else if (match && match[2]) {
-                const trimmed = match[2].trim();
-                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-                    return trimmed;
-                }
-            }
-            return null;
-        };
-
-        /**
-         * Fetches data from the API with a retry mechanism and exponential backoff.
-         * @param {string} apiUrl The URL of the API endpoint.
-         * @param {object} payload The request body payload.
-         * @param {number} retries The maximum number of retries.
-         * @returns {Promise<Response>} A promise that resolves with the fetch response.
-         */
-        const fetchWithRetry = async (apiUrl, payload, retries = 5) => {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (response.ok) {
-                        return response;
-                    } else if (response.status === 403) {
-                        throw new Error('403 Forbidden: API key or permissions issue.');
-                    } else if (response.status >= 500) {
-                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                        console.log(`API call failed with status ${response.status}. Retrying in ${delay}ms...`);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    } else {
-                        console.error(`API call failed with status ${response.status}. Not retrying.`);
-                        return response;
-                    }
-                } catch (error) {
-                    if (error.message.includes('403')) {
-                        throw error;
-                    }
-                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                    console.error(`Network error during API call. Retrying in ${delay}ms...`, error);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
-            throw new Error('API request failed after multiple retries.');
-        };
-        
-        /**
-         * Generates the prompt and schema for a specific section.
-         * @param {string} sectionId The ID of the section.
-         * @param {string} personName The user's name.
-         * @param {string} birthDate The user's birth date.
-         * @param {string} birthTime The user's birth time.
-         * @param {string} birthLocation The user's birth location.
-         * @param {string} language The selected language.
-         * @returns {{prompt: string, schema: object}} The prompt and JSON schema.
-         */
-        function getPromptAndSchema(sectionId, personName, birthDate, birthTime, birthLocation, language) {
-            switch (sectionId) {
-                case 'daily-horoscope':
-                    return {
-                        prompt: `Act as an expert Vedic astrologer. Generate a detailed daily horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
-                        The response must be a JSON object with only these properties:
-                        - overallForecast
-                        - planetImpact
-                        - relationships
-                        - economicStatus
-                        - healthStatus`,
-                        schema: {
-                            type: "OBJECT",
-                            properties: {
-                                overallForecast: { type: "STRING" },
-                                planetImpact: { type: "STRING" },
-                                relationships: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        father: { type: "STRING" },
-                                        mother: { type: "STRING" },
-                                        sibling: { type: "STRING" },
-                                        children: { type: "STRING" },
-                                        spouse: { type: "STRING" }
-                                    }
-                                },
-                                economicStatus: { type: "STRING" },
-                                healthStatus: { type: "STRING" }
-                            }
-                        }
-                    };
-                case 'monthly-annual':
-                    return {
-                        prompt: `Act as an expert Vedic astrologer. Generate a detailed monthly and annual horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
-                        The response must be a JSON object with only these properties:
-                        - monthlyHoroscope
-                        - annualHoroscope`,
-                        schema: {
-                            type: "OBJECT",
-                            properties: {
-                                monthlyHoroscope: { type: "STRING" },
-                                annualHoroscope: { type: "STRING" }
-                            }
-                        }
-                    };
-                case 'family-relationship':
-                    return {
-                        prompt: `Act as an expert Vedic astrologer. Generate a detailed forecast for family and relationships for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
-                        The response must be a JSON object with only these properties:
-                        - familySituation
-                        - carefulAbout
-                        - familyMembersHoroscope`,
-                        schema: {
-                            type: "OBJECT",
-                            properties: {
-                                familySituation: { type: "STRING" },
-                                carefulAbout: { type: "STRING" },
-                                familyMembersHoroscope: {
-                                    type: "ARRAY",
-                                    items: {
-                                        type: "OBJECT",
-                                        properties: {
-                                            relationship: { type: "STRING" },
-                                            forecast: { type: "STRING" }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    };
-                case 'age-wise':
-                    return {
-                        prompt: `Act as an expert Vedic astrologer. Generate an age-wise horoscope forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}.
-                        The response must be a JSON object with only this property:
-                        - ageWiseHoroscope`,
-                        schema: {
-                            type: "OBJECT",
-                            properties: {
-                                ageWiseHoroscope: {
-                                    type: "ARRAY",
-                                    items: {
-                                        type: "OBJECT",
-                                        properties: {
-                                            ageBin: { type: "STRING" },
-                                            forecast: { type: "STRING" }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    };
-                default:
-                    return null;
-            }
-        }
-        
-        /**
-         * Fetches and caches data for a single section.
-         * @param {string} sectionId The ID of the section to fetch.
-         * @returns {Promise<object>} The fetched data object.
-         */
-        async function fetchAndCacheSection(sectionId, personName, birthDate, birthTime, birthLocation, language) {
-            const { prompt, schema } = getPromptAndSchema(sectionId, personName, birthDate, birthTime, birthLocation, language);
-            
-            const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-            const payload = {
-                contents: chatHistory,
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: schema
-                }
-            };
-            
-            // The API key is a placeholder, and the platform will provide a real one.
-            const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg"; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-            
-            const response = await fetchWithRetry(apiUrl, payload);
-            const result = await response.json();
-            
-            if (response.ok && result.candidates && result.candidates.length > 0) {
-                const rawText = result.candidates[0].content.parts[0].text;
-                let details;
-                try {
-                    details = JSON.parse(rawText);
-                } catch (jsonError) {
-                    const jsonString = extractJsonFromResponse(rawText);
-                    details = jsonString ? JSON.parse(jsonString) : null;
-                }
-                
-                if (details) {
-                    dataCache[sectionId] = details; // Cache the fetched data
-                    return details;
-                } else {
-                    throw new Error('Failed to parse JSON data.');
-                }
-            } else {
-                throw new Error('API response structure is unexpected or content is missing.');
-            }
-        }
-        
-        /**
-         * Determines the Moon Sign (Rashi) based on the date of birth using a simplified
-         * Sidereal (Vedic) calendar mapping. This provides a deterministic result
-         * that is more accurate than relying on a general LLM response.
-         * @param {Date} date The birth date.
-         * @returns {string} The name of the Rashi.
-         */
-        function getMoonSign(date) {
-            const day = date.getDate();
-            const month = date.getMonth() + 1; // getMonth() is 0-indexed
-
-            const rashiMap = [
-                { startMonth: 3, startDay: 13, name: 'Kumbha (Aquarius)' },
-                { startMonth: 4, startDay: 14, name: 'Meena (Pisces)' },
-                { startMonth: 5, startDay: 14, name: 'Mesha (Aries)' },
-                { startMonth: 6, startDay: 14, name: 'Vrishabha (Taurus)' },
-                { startMonth: 7, startDay: 16, name: 'Mithuna (Gemini)' },
-                { startMonth: 8, startDay: 17, name: 'Karka (Cancer)' },
-                { startMonth: 9, startDay: 17, name: 'Simha (Leo)' },
-                { startMonth: 10, startDay: 17, name: 'Kanya (Virgo)' },
-                { startMonth: 11, startDay: 16, name: 'Tula (Libra)' },
-                { startMonth: 12, startDay: 16, name: 'Vrishchika (Scorpio)' },
-                { startMonth: 1, startDay: 15, name: 'Dhanu (Sagittarius)' },
-                { startMonth: 2, startDay: 13, name: 'Makara (Capricorn)' },
-            ];
-
-            let rashi = 'Unknown';
-            for (let i = 0; i < rashiMap.length; i++) {
-                const current = rashiMap[i];
-                const next = rashiMap[(i + 1) % rashiMap.length];
-                
-                const currentStart = new Date(1900, current.startMonth - 1, current.startDay);
-                const nextStart = new Date(1900, next.startMonth - 1, next.startDay);
-                const testDate = new Date(1900, month - 1, day);
-
-                if (current.startMonth <= next.startMonth) {
-                    if (testDate >= currentStart && testDate < nextStart) {
-                        rashi = current.name;
-                        break;
-                    }
-                } else { // Handles the December to January wrap-around
-                    if (testDate >= currentStart || testDate < nextStart) {
-                        rashi = current.name;
-                        break;
-                    }
-                }
-            }
-            return rashi;
-        }
-
-        // This is the main function that runs when the form is submitted.
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            // Reset UI for a new search
-            resultsContainer.classList.add('hidden');
-            resultsTitle.textContent = '';
-            basicProfileSection.innerHTML = '';
-            accordionHeaders.forEach(header => {
-                header.nextElementSibling.classList.remove('open');
-                header.querySelector('.chevron-icon').classList.remove('rotate-180');
-                const contentDiv = header.nextElementSibling.querySelector('div:not([id$="-loading"])');
-                contentDiv.innerHTML = ''; // Clear content
-            });
-            
-            // Start of the loading state for initial fetch
-            submitBtn.disabled = true;
-            buttonText.textContent = '';
-            submitBtn.innerHTML = '<svg class="animate-spin-fast h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-
-            const personName = personNameInput.value;
-            const birthDateStr = birthDateInput.value;
-            const birthTime = birthTimeInput.value;
-            const birthLocation = birthLocationInput.value;
-            const language = languageSelect.value;
-            const t = translations[language];
-            
-            // --- NEW: Calculate Rashi locally for accuracy ---
-            const birthDate = new Date(birthDateStr);
-            const moonSign = getMoonSign(birthDate);
-
-            // Clear cache
-            Object.keys(dataCache).forEach(key => dataCache[key] = null);
-            
-            console.log('Fetching initial astrology details for:', { personName, birthDateStr, birthTime, birthLocation, language });
-
-            try {
-                // Gemini API Call for Initial Basic Profile
-                const basicProfilePrompt = `Act as an expert Vedic astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDateStr}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.
-                The response must be a JSON object with only these properties:
-                - sunSign
-                - ascendant
-                - houseDetails
-                - planetPositions
-                `;
-                
-                const chatHistory = [{ role: "user", parts: [{ text: basicProfilePrompt }] }];
-                const payload = {
-                    contents: chatHistory,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "OBJECT",
-                            properties: {
-                                sunSign: { type: "STRING" },
-                                ascendant: { type: "STRING" },
-                                houseDetails: { type: "STRING" },
-                                planetPositions: { type: "STRING" }
-                            }
-                        }
-                    }
-                };
-                
-                // The API key is a placeholder, and the platform will provide a real one.
-                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                
-                const response = await fetchWithRetry(apiUrl, payload);
-                const result = await response.json();
-                
-                if (response.ok && result.candidates && result.candidates.length > 0) {
-                    const rawText = result.candidates[0].content.parts[0].text;
-                    let details;
-                    try {
-                        details = JSON.parse(rawText);
-                    } catch (jsonError) {
-                        const jsonString = extractJsonFromResponse(rawText);
-                        details = jsonString ? JSON.parse(jsonString) : null;
-                    }
-
-                    if (details) {
-                        // Pass the locally calculated Moon Sign to the display function
-                        displayBasicProfile(details, moonSign, language);
-                        
-                        // --- OPTIMIZATION: Start parallel fetching for all other sections ---
-                        const sectionIds = Object.keys(dataCache);
-                        const fetchPromises = sectionIds.map(id => fetchAndCacheSection(id, personName, birthDateStr, birthTime, birthLocation, language));
-                        
-                        // Wait for all parallel fetches to complete
-                        await Promise.all(fetchPromises.map(p => p.catch(e => console.error(`Error in parallel fetch for a section: ${e.message}`))));
-                        // Data is now ready in the cache!
-                        // --- End of Optimization ---
-
-                    } else {
-                        resultsContainer.classList.remove('hidden');
-                        resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, couldn't generate initial details. **Failed to parse JSON data.**</p>`;
-                    }
-                } else {
-                    const errorMessage = `API response structure is unexpected or content is missing.`;
-                    console.error(errorMessage, result);
-                    resultsContainer.classList.remove('hidden');
-                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred: **${errorMessage}**. Please try again.</p>`;
-                }
-            } catch (error) {
-                console.error('Error fetching initial astrology details:', error);
-                resultsContainer.classList.remove('hidden');
-                if (error.message.includes('403 Forbidden')) {
-                    resultsContainer.innerHTML = `<div class="bg-red-900 border-l-4 border-red-500 text-red-100 p-4" role="alert">
-                                                    <p class="font-bold">API Key Error</p>
-                                                    <p>I received a **403 Forbidden** error from the API. This indicates a problem with the API key or its permissions. Please ensure your API key is correctly configured and has the necessary access.</p>
-                                                </div>`;
-                } else {
-                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred: **${error.message}**. Please try again.</p>`;
-                }
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i data-lucide="search" size="20" class="search-icon"></i><span id="button-text">${translations[languageSelect.value].button}</span>`;
-                lucide.createIcons();
-            }
-        });
-        
-        // This function displays the initial profile details
-        function displayBasicProfile(details, moonSign, language) {
-            const t = translations[language];
-            resultsContainer.classList.remove('hidden');
-            resultsTitle.textContent = t.title;
-            basicProfileSection.innerHTML = `
-                <p><strong>${t.hello}</strong> <span class="font-semibold text-yellow-200">${personNameInput.value}</span></p>
-                <p><strong>${t.sunSign}</strong> <span class="font-semibold text-yellow-200">${details.sunSign}</span></p>
-                <p><strong>${t.moonSign}</strong> <span class="font-semibold text-yellow-200">${moonSign}</span></p>
-                <p><strong>${t.ascendant}</strong> <span class="font-semibold text-yellow-200">${details.ascendant}</span></p>
-                <p><strong>${t.houseDetails}</strong> ${details.houseDetails}</p>
-                <p><strong>${t.planetPositions}</strong> ${details.planetPositions}</p>
-            `;
-        }
-
-        // Add event listeners to all accordion headers
-        accordionHeaders.forEach(header => {
-            header.addEventListener('click', async () => {
-                const content = header.nextElementSibling;
-                const chevronIcon = header.querySelector('.chevron-icon');
-                const isContentOpen = content.classList.contains('open');
-
-                // Close all other accordions
-                accordionHeaders.forEach(otherHeader => {
-                    if (otherHeader !== header) {
-                        otherHeader.nextElementSibling.classList.remove('open');
-                        otherHeader.querySelector('.chevron-icon').classList.remove('rotate-180');
-                    }
-                });
-
-                // Toggle the clicked accordion
-                content.classList.toggle('open');
-                chevronIcon.classList.toggle('rotate-180', !isContentOpen);
-                
-                // If the accordion is now open and content has not been loaded, fetch it
-                if (!isContentOpen && content.classList.contains('open')) {
-                    const sectionId = content.id.replace('-content', '');
-                    const detailsDiv = content.querySelector('div:not([id$="-loading"])');
-                    const loadingDiv = loadingElements[sectionId];
-                    
-                    if (dataCache[sectionId]) {
-                         // Data is already in the cache, render it instantly
-                         detailsDiv.innerHTML = '';
-                         displaySectionData(sectionId, dataCache[sectionId], detailsDiv);
-                         if(loadingDiv) loadingDiv.classList.add('hidden'); // Hide loading spinner if it was shown
-                    } else {
-                         // Data not in cache (e.g., initial parallel fetch failed for this section), fetch now
-                         if(loadingDiv) loadingDiv.classList.remove('hidden');
-                         detailsDiv.innerHTML = '';
-                         await fetchSectionData(sectionId, detailsDiv);
-                    }
-                }
-            });
-        });
-        
-        /**
-         * Fetches and displays data for a specific section.
-         * @param {string} sectionId The ID of the section to fetch (e.g., 'daily', 'monthlyAnnual').
-         * @param {HTMLElement} detailsDiv The div to populate with the results.
-         */
-        async function fetchSectionData(sectionId, detailsDiv) {
-            const language = languageSelect.value;
-            const personName = personNameInput.value;
-            const birthDate = birthDateInput.value;
-            const birthTime = birthTimeInput.value;
-            const birthLocation = birthLocationInput.value;
-            
-            const loadingDiv = loadingElements[sectionId];
-            if(loadingDiv) loadingDiv.classList.remove('hidden');
-
-            try {
-                const details = await fetchAndCacheSection(sectionId, personName, birthDate, birthTime, birthLocation, language);
-                displaySectionData(sectionId, details, detailsDiv);
-            } catch (error) {
-                console.error(`Error fetching data for section ${sectionId}:`, error);
-                detailsDiv.innerHTML = `<p class="text-red-400">An unexpected error occurred: **${error.message}**. Please try again.</p>`;
-            } finally {
-                if(loadingDiv) loadingDiv.classList.add('hidden');
-            }
-        }
-
-        /**
-         * Renders the content for a specific section.
-         * @param {string} sectionId The ID of the section.
-         * @param {object} details The data to display.
-         * @param {HTMLElement} detailsDiv The div to populate.
-         */
-        function displaySectionData(sectionId, details, detailsDiv) {
-            const t = translations[languageSelect.value];
-            let htmlContent = '';
-            
-            switch (sectionId) {
-                case 'daily-horoscope':
-                    htmlContent = `
-                        <h3 class="text-xl font-bold text-yellow-200">${t.dailyPlanetImpact}</h3>
-                        <p>${details.planetImpact}</p>
-                        <h3 class="text-xl font-bold text-yellow-200 mt-4">${t.dailyRelationship}</h3>
-                        <ul class="list-disc list-inside ml-4 space-y-2">
-                            <li><strong>${t.relationshipWithFather}</strong> ${details.relationships.father}</li>
-                            <li><strong>${t.relationshipWithMother}</strong> ${details.relationships.mother}</li>
-                            <li><strong>${t.relationshipWithSiblings}</strong> ${details.relationships.sibling}</li>
-                            <li><strong>${t.relationshipWithChildren}</strong> ${details.relationships.children}</li>
-                            <li><strong>${t.relationshipWithSpouse}</strong> ${details.relationships.spouse}</li>
-                        </ul>
-                        <h3 class="text-xl font-bold text-yellow-200 mt-4">${t.dailyEconomicStatus}</h3>
-                        <p>${details.economicStatus}</p>
-                        <h3 class="text-xl font-bold text-yellow-200 mt-4">${t.dailyHealthStatus}</h3>
-                        <p>${details.healthStatus}</p>
-                    `;
-                    break;
-                case 'monthly-annual':
-                    htmlContent = `
-                        <h3 class="text-xl font-bold text-yellow-200">${t.monthlyHoroscope}</h3>
-                        <p>${details.monthlyHoroscope}</p>
-                        <h3 class="text-xl font-bold text-yellow-200 mt-4">${t.annualHoroscope}</h3>
-                        <p>${details.annualHoroscope}</p>
-                    `;
-                    break;
-                case 'family-relationship':
-                    let familyMembersHtml = details.familyMembersHoroscope.map(item => `
-                        <li class="p-2 rounded-lg bg-gray-800 border border-gray-700">
-                            <strong class="text-yellow-200">${item.relationship}:</strong> ${item.forecast}
-                        </li>
-                    `).join('');
-                    htmlContent = `
-                        <h3 class="text-xl font-bold text-yellow-200">${t.familySituation}</h3>
-                        <p>${details.familySituation}</p>
-                        <h3 class="text-xl font-bold text-yellow-200 mt-4">${t.familyMemberHoroscope}</h3>
-                        <ul class="list-none space-y-2">
-                            ${familyMembersHtml}
-                        </ul>
-                        <h3 class="text-xl font-bold text-yellow-200 mt-4">${t.carefulAbout}</h3>
-                        <p>${details.carefulAbout}</p>
-                    `;
-                    break;
-                case 'age-wise':
-                    let ageWiseHtml = details.ageWiseHoroscope.map(item => `
-                        <div class="p-4 rounded-lg bg-gray-800 border border-gray-700">
-                            <h4 class="text-xl font-bold text-yellow-200">${item.ageBin}</h4>
-                            <p>${item.forecast}</p>
-                        </div>
-                    `).join('');
-                    htmlContent = `
-                        <h3 class="text-xl font-bold text-yellow-200">${t.ageWiseHoroscope}</h3>
-                        <div class="space-y-4">
-                            ${ageWiseHtml}
-                        </div>
-                    `;
-                    break;
-            }
-            detailsDiv.innerHTML = htmlContent;
-        }
-    </script>
-</body>
-</html>
+export default App;
