@@ -328,7 +328,7 @@
                 const response = await fetchWithRetry(apiUrl, payload);
                 const result = await response.json();
                 
-                if (result.candidates && result.candidates.length > 0 &&
+                if (response.ok && result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
                         const rawText = result.candidates[0].content.parts[0].text;
@@ -360,19 +360,20 @@
                         } else {
                             // Both parsing methods failed, show a detailed error
                             resultsContainer.classList.remove('hidden');
-                            resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. The server responded with an invalid or empty result. Please try again. Raw response for debugging: <pre class="mt-4 p-4 bg-gray-800 rounded-lg text-sm text-gray-300 whitespace-pre-wrap">${rawText}</pre></p>`;
+                            resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. **Failed to parse JSON data.** Error: **${jsonError.message}**. Please try again. Raw response for debugging: <pre class="mt-4 p-4 bg-gray-800 rounded-lg text-sm text-gray-300 whitespace-pre-wrap">${rawText}</pre></p>`;
                         }
                 } else {
-                    console.error('API response structure is unexpected or content is missing', result);
+                    const errorMessage = `API response structure is unexpected or content is missing. Status: ${response.status}. Error: ${response.statusText}.`;
+                    console.error(errorMessage, result);
                     resultsContainer.classList.remove('hidden');
-                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. The server responded with an empty or invalid result. Please try again.</p>`;
+                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. The server responded with an empty or invalid result. **${errorMessage}** Please try again.</p>`;
                 }
             } catch (error) {
                 // If a network error or other unhandled error occurs during the "API call", this block will run.
                 console.error('Error fetching astrology details:', error);
                 // Make the results container visible to show the error.
                 resultsContainer.classList.remove('hidden');
-                resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred. Please try again. Check your browser console for more details.</p>`;
+                resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred: **${error.message}**. Please try again.</p>`;
             } finally {
                 // End of the loading state
                 // ===================================
