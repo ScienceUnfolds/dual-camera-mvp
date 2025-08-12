@@ -51,7 +51,7 @@
             It has an ID for easy access in JavaScript and uses Tailwind classes for spacing.
         -->
         <form id="astrology-form" class="space-y-6">
-            <!-- Language selection dropdown -->
+             <!-- Language selection dropdown -->
             <div class="relative">
                 <label for="language" class="block text-sm font-medium text-gray-400 mb-2">Language</label>
                 <div class="relative">
@@ -65,6 +65,17 @@
                         <option value="ne">नेपाली (Nepali)</option>
                     </select>
                 </div>
+            </div>
+            <!-- Person Name input field -->
+            <div class="relative">
+                <label for="person-name" class="block text-sm font-medium text-gray-400 mb-2">Your Name</label>
+                <input
+                    type="text"
+                    id="person-name"
+                    placeholder="e.g., John Doe"
+                    required
+                    class="w-full pl-4 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+                />
             </div>
             <!-- Date of Birth input field -->
             <div class="relative">
@@ -143,6 +154,7 @@
         // This makes it easy to manipulate them later in the code.
         const form = document.getElementById('astrology-form');
         const languageSelect = document.getElementById('language');
+        const personNameInput = document.getElementById('person-name');
         const birthDateInput = document.getElementById('birth-date');
         const birthTimeInput = document.getElementById('birth-time');
         const birthLocationInput = document.getElementById('birth-location');
@@ -156,6 +168,7 @@
             en: {
                 button: 'Get My Astrology Details',
                 title: 'Your Astrological Profile',
+                hello: 'Hello',
                 sunSign: 'Sun Sign:',
                 moonSign: 'Moon Sign:',
                 ascendant: 'Ascendant:',
@@ -167,6 +180,7 @@
             ne: {
                 button: 'मेरो ज्योतिष विवरण प्राप्त गर्नुहोस्',
                 title: 'तपाईको ज्योतिषीय प्रोफाइल',
+                hello: 'नमस्ते',
                 sunSign: 'सूर्य राशि:',
                 moonSign: 'चन्द्र राशि:',
                 ascendant: 'लग्न:',
@@ -207,47 +221,63 @@
             resultsContainer.classList.add('hidden');
 
             // Get the values from the form inputs.
+            const personName = personNameInput.value;
             const birthDate = birthDateInput.value;
             const birthTime = birthTimeInput.value;
             const birthLocation = birthLocationInput.value;
             const language = languageSelect.value;
             
-            console.log('Fetching astrological details for:', { birthDate, birthTime, birthLocation, language });
+            console.log('Fetching astrological details for:', { personName, birthDate, birthTime, birthLocation, language });
 
             try {
                 // ===================================
-                // Mock API Call
+                // Gemini API Call for Dynamic Forecast
                 // ===================================
-                // This simulates a real API call to an astrology service.
-                // It waits for 2 seconds to give the user a sense of a real loading process.
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                // This is a placeholder object. In a real app, this data would come
-                // from an actual API call, and it would be specific to the user's details.
-                // Here, we just switch between English and Nepali mock data.
-                const mockDetails = language === 'ne'
-                    ? {
-                        sunSign: 'कन्या राशि',
-                        moonSign: 'वृश्चिक राशि',
-                        ascendant: 'धनु राशि',
-                        houseDetails: 'तपाईको धनु राशिमा रहेको लग्नले तपाईलाई स्वतन्त्रता र साहसको लागि बलियो इच्छा दिन्छ...',
-                        planetPositions: 'सूर्य कन्या राशिमा (20°), चन्द्रमा वृश्चिक राशिमा (5°), बुध तुला राशिमा (12°)...',
-                        monthlyRashifal: 'यो महिना तपाईंको लागि मिश्रित फलदायी रहनेछ। काममा सफलता मिल्नेछ, तर स्वास्थ्यमा ध्यान दिनुपर्नेछ। प्रेम जीवनमा मधुरता रहनेछ।',
-                        annualRashifal: 'यो वर्ष तपाईंको लागि नयाँ अवसरहरूले भरिएको हुनेछ। करियरमा प्रगति हुनेछ र आर्थिक स्थितिमा सुधार हुनेछ। प्रेम सम्बन्धमा केही चुनौतीहरू आउन सक्छन्, तर धैर्यताले सबै कुरा समाधान हुनेछ।'
-                    }
-                    : {
-                        sunSign: 'Virgo',
-                        moonSign: 'Scorpio',
-                        ascendant: 'Sagittarius',
-                        houseDetails: 'Your Ascendant in Sagittarius gives you a strong desire for freedom and adventure...',
-                        planetPositions: 'Sun in Virgo (20°), Moon in Scorpio (5°), Mercury in Libra (12°)...',
-                        monthlyRashifal: 'This month will be a mix of good and challenging times. You will achieve success in your work, but you should pay attention to your health. Your love life will be sweet.',
-                        annualRashifal: 'This year will be filled with new opportunities for you. There will be progress in your career and an improvement in your financial situation. Love relationships may face some challenges, but patience will resolve everything.'
-                    };
-
-                // Once the "data" is received, call the function to display it.
-                displayResults(mockDetails, language);
-
+                const t = translations[language];
+                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The response must be a JSON object with the following properties: "sunSign", "moonSign", "ascendant", "houseDetails", "planetPositions", "monthlyRashifal", and "annualRashifal". The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.`;
+                
+                const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                const payload = {
+                     contents: chatHistory,
+                     generationConfig: {
+                         responseMimeType: "application/json",
+                         responseSchema: {
+                             type: "OBJECT",
+                             properties: {
+                                "sunSign": { "type": "STRING" },
+                                "moonSign": { "type": "STRING" },
+                                "ascendant": { "type": "STRING" },
+                                "houseDetails": { "type": "STRING" },
+                                "planetPositions": { "type": "STRING" },
+                                "monthlyRashifal": { "type": "STRING" },
+                                "annualRashifal": { "type": "STRING" }
+                            }
+                         }
+                     }
+                 };
+                
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                        const json = result.candidates[0].content.parts[0].text;
+                        const details = JSON.parse(json);
+                        displayResults(details, language);
+                } else {
+                    console.error('API response structure is unexpected or content is missing');
+                    resultsContainer.classList.remove('hidden');
+                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. Please try again.</p>`;
+                }
             } catch (error) {
                 // If an error occurs during the "API call", this block will run.
                 console.error('Error fetching astrology details:', error);
@@ -280,6 +310,7 @@
             resultsContainer.innerHTML = `
                 <h2 class="text-2xl font-bold mb-4 text-center text-yellow-300">${t.title}</h2>
                 <div class="space-y-4 text-gray-300">
+                    <p><strong>${t.hello}</strong> <span class="font-semibold text-yellow-200">${personNameInput.value}</span></p>
                     <p><strong>${t.sunSign}</strong> <span class="font-semibold text-yellow-200">${details.sunSign}</span></p>
                     <p><strong>${t.moonSign}</strong> <span class="font-semibold text-yellow-200">${details.moonSign}</span></p>
                     <p><strong>${t.ascendant}</strong> <span class="font-semibold text-yellow-200">${details.ascendant}</span></p>
