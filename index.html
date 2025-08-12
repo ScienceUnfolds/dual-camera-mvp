@@ -245,6 +245,9 @@
                     
                     if (response.ok) {
                         return response;
+                    } else if (response.status === 403) {
+                         // Specific handling for 403 error
+                        throw new Error('403 Forbidden: API key or permissions issue.');
                     } else if (response.status >= 500) {
                         // Server error, retry after a delay
                         const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
@@ -256,6 +259,10 @@
                         return response;
                     }
                 } catch (error) {
+                    // Re-throw the 403 error immediately
+                    if (error.message.startsWith('403')) {
+                        throw error;
+                    }
                     // Network error, retry after a delay
                     const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
                     console.error(`Network error during API call. Retrying in ${delay}ms...`, error);
@@ -360,7 +367,7 @@
                         } else {
                             // Both parsing methods failed, show a detailed error
                             resultsContainer.classList.remove('hidden');
-                            resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. **Failed to parse JSON data.** Error: **${jsonError.message}**. Please try again. Raw response for debugging: <pre class="mt-4 p-4 bg-gray-800 rounded-lg text-sm text-gray-300 whitespace-pre-wrap">${rawText}</pre></p>`;
+                            resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. **Failed to parse JSON data.** Please try again. Raw response for debugging: <pre class="mt-4 p-4 bg-gray-800 rounded-lg text-sm text-gray-300 whitespace-pre-wrap">${rawText}</pre></p>`;
                         }
                 } else {
                     const errorMessage = `API response structure is unexpected or content is missing. Status: ${response.status}. Error: ${response.statusText}.`;
@@ -369,11 +376,18 @@
                     resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. The server responded with an empty or invalid result. **${errorMessage}** Please try again.</p>`;
                 }
             } catch (error) {
-                // If a network error or other unhandled error occurs during the "API call", this block will run.
                 console.error('Error fetching astrology details:', error);
-                // Make the results container visible to show the error.
                 resultsContainer.classList.remove('hidden');
-                resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred: **${error.message}**. Please try again.</p>`;
+                // Check specifically for the 403 error message
+                if (error.message.includes('403 Forbidden')) {
+                    resultsContainer.innerHTML = `<div class="bg-red-900 border-l-4 border-red-500 text-red-100 p-4" role="alert">
+                                                    <p class="font-bold">API Key Error</p>
+                                                    <p>I received a **403 Forbidden** error from the API. This indicates a problem with the API key or its permissions. Please ensure your API key is correctly configured and has the necessary access.</p>
+                                                </div>`;
+                } else {
+                    // For all other errors, show a generic message.
+                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred: **${error.message}**. Please try again.</p>`;
+                }
             } finally {
                 // End of the loading state
                 // ===================================
