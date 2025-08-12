@@ -7,128 +7,71 @@
     <!--
         This script tag loads Tailwind CSS, a utility-first CSS framework.
         We use it for all the styling (colors, layout, spacing, etc.).
-        This is a common way to quickly add modern styling to a web page.
     -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!--
-        This script loads Lucide Icons, which are a lightweight and modern icon set.
-        We use icons for the globe, calendar, clock, and map-pin to make the form more visually appealing.
-    -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
             /* Sets the default font for the entire page */
             font-family: 'Inter', sans-serif;
+            background-image: url('https://placehold.co/1920x1080/0d1117/e5e7eb?text=Starry+Background');
+            background-size: cover;
+            background-position: center;
         }
-        /* Defines the keyframes for the "spin" animation used for the loading spinner */
-        @keyframes spin {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
+        /* Defines the keyframes for a simple fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        /* Applies the spin animation with a fast speed to an element with this class */
-        .animate-spin-fast {
-            animation: spin 0.7s linear infinite;
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
+<body class="text-white flex flex-col items-center justify-center min-h-screen p-4">
     <!--
         This is the main container for the app.
-        It's styled with a dark background, rounded corners, shadow, and centered on the page.
+        It's styled with a dark, semi-transparent background, rounded corners,
+        and a subtle shadow to make it stand out.
     -->
-    <div class="bg-gray-800 shadow-2xl rounded-xl p-8 max-w-lg w-full transform transition-all duration-300 hover:scale-105">
+    <div class="bg-gray-900 bg-opacity-70 shadow-2xl rounded-xl p-8 max-w-md w-full transform transition-all duration-300 hover:scale-105">
         <!-- Main heading for the app -->
-        <h1 class="text-4xl font-bold text-center mb-6 text-yellow-300">Astrology Tool</h1>
+        <h1 class="text-4xl font-bold text-center mb-6 text-yellow-300 drop-shadow-lg">Astrology Sun Sign Calculator</h1>
         <!-- A short descriptive paragraph -->
-        <p class="text-center text-gray-400 mb-8">Enter your birth details to discover your astrological chart.</p>
+        <p class="text-center text-gray-300 mb-8">Enter your date of birth to discover your zodiac Sun Sign!</p>
 
         <!--
             The main form for user input.
-            It has an ID for easy access in JavaScript and uses Tailwind classes for spacing.
+            It has an ID for easy access in JavaScript.
         -->
         <form id="astrology-form" class="space-y-6">
-             <!-- Language selection dropdown -->
-            <div class="relative">
-                <label for="language" class="block text-sm font-medium text-gray-400 mb-2">Language</label>
-                <div class="relative">
-                    <!-- Globe icon for the language dropdown, styled with Lucide -->
-                    <i data-lucide="globe" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
-                    <select
-                        id="language"
-                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-                    >
-                        <option value="en">English</option>
-                        <option value="ne">नेपाली (Nepali)</option>
-                    </select>
-                </div>
-            </div>
             <!-- Person Name input field -->
             <div class="relative">
                 <label for="person-name" class="block text-sm font-medium text-gray-400 mb-2">Your Name</label>
                 <input
                     type="text"
                     id="person-name"
-                    placeholder="e.g., John Doe"
+                    placeholder="e.g., Jane Doe"
                     required
-                    class="w-full pl-4 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+                    class="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
                 />
             </div>
             <!-- Date of Birth input field -->
             <div class="relative">
                 <label for="birth-date" class="block text-sm font-medium text-gray-400 mb-2">Date of Birth</label>
-                <div class="relative">
-                    <!-- Calendar icon -->
-                    <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
-                    <input
-                        type="date"
-                        id="birth-date"
-                        required
-                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-                    />
-                </div>
+                <input
+                    type="date"
+                    id="birth-date"
+                    required
+                    class="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
+                />
             </div>
-            <!-- Time of Birth input field -->
-            <div class="relative">
-                <label for="birth-time" class="block text-sm font-medium text-gray-400 mb-2">Time of Birth</label>
-                <div class="relative">
-                    <!-- Clock icon -->
-                    <i data-lucide="clock" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
-                    <input
-                        type="time"
-                        id="birth-time"
-                        required
-                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-                    />
-                </div>
-            </div>
-            <!-- City/Location input field -->
-            <div class="relative">
-                <label for="birth-location" class="block text-sm font-medium text-gray-400 mb-2">City/Location</label>
-                <div class="relative">
-                    <!-- Map pin icon -->
-                    <i data-lucide="map-pin" class="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-400" size="20"></i>
-                    <input
-                        type="text"
-                        id="birth-location"
-                        placeholder="e.g., New York, NY"
-                        required
-                        class="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-colors duration-200"
-                    />
-                </div>
-            </div>
-            <!-- Submit button to trigger the astrology calculation -->
+            <!-- Submit button to trigger the sun sign calculation -->
             <button
                 type="submit"
                 id="submit-btn"
-                class="w-full flex items-center justify-center space-x-2 py-3 px-6 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-md hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
+                class="w-full py-3 px-6 bg-yellow-500 text-gray-900 font-bold rounded-lg shadow-lg hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 transform hover:scale-105"
             >
-                <!-- Search icon for the button -->
-                <i data-lucide="search" size="20" class="search-icon"></i>
-                <span id="button-text">Get My Astrology Details</span>
+                Calculate My Sun Sign
             </button>
         </form>
 
@@ -136,7 +79,7 @@
             This container will hold the results after the form is submitted.
             It is initially hidden with the 'hidden' class.
         -->
-        <div id="results-container" class="mt-8 p-6 bg-gray-900 rounded-xl shadow-inner border border-gray-700 hidden">
+        <div id="results-container" class="mt-8 p-6 bg-gray-800 rounded-xl shadow-inner border border-gray-700 hidden animate-fade-in">
             <!-- Results will be dynamically inserted here by the JavaScript code -->
         </div>
     </div>
@@ -147,281 +90,90 @@
         ========================================
     -->
     <script>
-        // Initializes Lucide icons, so they are rendered as SVGs on the page.
-        lucide.createIcons();
-
         // Fetches all the necessary HTML elements using their unique IDs.
-        // This makes it easy to manipulate them later in the code.
         const form = document.getElementById('astrology-form');
-        const languageSelect = document.getElementById('language');
         const personNameInput = document.getElementById('person-name');
         const birthDateInput = document.getElementById('birth-date');
-        const birthTimeInput = document.getElementById('birth-time');
-        const birthLocationInput = document.getElementById('birth-location');
-        const submitBtn = document.getElementById('submit-btn');
-        const buttonText = document.getElementById('button-text');
         const resultsContainer = document.getElementById('results-container');
 
-        // This object stores all the text strings for the app in different languages.
-        // This makes the app easily translatable by simply adding more language keys.
-        const translations = {
-            en: {
-                button: 'Get My Astrology Details',
-                title: 'Your Astrological Profile',
-                hello: 'Hello',
-                sunSign: 'Sun Sign:',
-                moonSign: 'Moon Sign:',
-                ascendant: 'Ascendant:',
-                houseDetails: 'House Details:',
-                planetPositions: 'Planet Positions:',
-                monthlyRashifal: 'Monthly Rashifal (Horoscope):',
-                annualRashifal: 'Annual Rashifal (Horoscope):'
-            },
-            ne: {
-                button: 'मेरो ज्योतिष विवरण प्राप्त गर्नुहोस्',
-                title: 'तपाईको ज्योतिषीय प्रोफाइल',
-                hello: 'नमस्ते',
-                sunSign: 'सूर्य राशि:',
-                moonSign: 'चन्द्र राशि:',
-                ascendant: 'लग्न:',
-                houseDetails: 'घरको विवरण:',
-                planetPositions: 'ग्रहको स्थिति:',
-                monthlyRashifal: 'मासिक राशिफल:',
-                annualRashifal: 'वार्षिक राशिफल:'
-            }
-        };
-        
-        // Function to update the text on the submit button based on the selected language.
-        const updateButtonText = () => {
-            buttonText.textContent = translations[languageSelect.value].button;
-        };
-
-        // This event listener waits for the language dropdown value to change.
-        // When it changes, the updateButtonText function is called.
-        languageSelect.addEventListener('change', updateButtonText);
-        updateButtonText(); // Call the function once when the page loads to set the initial text.
-        
-        /**
-         * Extracts a valid JSON string from a potentially malformed API response.
-         * The model sometimes wraps the JSON in markdown code blocks or includes
-         * conversational text. This function cleans that up.
-         * @param {string} responseText The raw text response from the API.
-         * @returns {string|null} The cleaned JSON string or null if not found.
-         */
-        const extractJsonFromResponse = (responseText) => {
-            // Regex to find a block of text that looks like a JSON object.
-            // This handles cases with and without markdown code blocks.
-            const jsonRegex = /```json\s*([\s\S]*?)\s*```|({[\s\S]*})/;
-            const match = responseText.match(jsonRegex);
-
-            if (match && match[1]) {
-                return match[1]; // Return content inside the ```json block
-            } else if (match && match[2]) {
-                const trimmed = match[2].trim();
-                // A quick check to see if it starts with { and ends with }
-                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-                    return trimmed;
-                }
-            }
-            return null; // No valid JSON found
-        };
+        // This is a mapping of dates to their corresponding Sun Signs.
+        // It's a key part of this new, API-free approach.
+        const zodiacSigns = [
+            { sign: 'Capricorn', start: { month: 0, day: 20 } }, // Jan 20
+            { sign: 'Aquarius', start: { month: 1, day: 19 } },  // Feb 19
+            { sign: 'Pisces', start: { month: 2, day: 20 } },    // Mar 20
+            { sign: 'Aries', start: { month: 3, day: 21 } },     // Apr 21
+            { sign: 'Taurus', start: { month: 4, day: 21 } },    // May 21
+            { sign: 'Gemini', start: { month: 5, day: 21 } },    // Jun 21
+            { sign: 'Cancer', start: { month: 6, day: 23 } },    // Jul 23
+            { sign: 'Leo', start: { month: 7, day: 23 } },       // Aug 23
+            { sign: 'Virgo', start: { month: 8, day: 23 } },     // Sep 23
+            { sign: 'Libra', start: { month: 9, day: 23 } },     // Oct 23
+            { sign: 'Scorpio', start: { month: 10, day: 22 } },  // Nov 22
+            { sign: 'Sagittarius', start: { month: 11, day: 22 } }, // Dec 22
+            { sign: 'Capricorn', start: { month: 11, day: 31 } } // Wrap-around for Capricorn
+        ];
 
         /**
-         * Fetches data from the API with a retry mechanism and exponential backoff.
-         * This improves reliability in case of transient network issues or API throttling.
-         * @param {string} apiUrl The URL of the API endpoint.
-         * @param {object} payload The request body payload.
-         * @param {number} retries The maximum number of retries.
-         * @returns {Promise<Response>} A promise that resolves with the fetch response.
+         * Calculates the Sun Sign based on a given birth date.
+         * This function iterates through the zodiacSigns array to find the correct sign.
+         * @param {Date} birthDate The user's date of birth.
+         * @returns {string} The name of the zodiac sign.
          */
-        const fetchWithRetry = async (apiUrl, payload, retries = 5) => {
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (response.ok) {
-                        return response;
-                    } else if (response.status === 403) {
-                         // Specific handling for 403 error
-                        throw new Error('403 Forbidden: API key or permissions issue.');
-                    } else if (response.status >= 500) {
-                        // Server error, retry after a delay
-                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                        console.log(`API call failed with status ${response.status}. Retrying in ${delay}ms...`);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    } else {
-                        // Client error (4xx), do not retry
-                        console.error(`API call failed with status ${response.status}. Not retrying.`);
-                        return response;
-                    }
-                } catch (error) {
-                    // Re-throw the 403 error immediately
-                    if (error.message.startsWith('403')) {
-                        throw error;
-                    }
-                    // Network error, retry after a delay
-                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
-                    console.error(`Network error during API call. Retrying in ${delay}ms...`, error);
-                    await new Promise(resolve => setTimeout(resolve, delay));
+        function getSunSign(birthDate) {
+            const birthMonth = birthDate.getMonth();
+            const birthDay = birthDate.getDate();
+
+            let sunSign = '';
+            for (let i = 0; i < zodiacSigns.length; i++) {
+                const currentSign = zodiacSigns[i];
+                const nextSign = zodiacSigns[(i + 1) % zodiacSigns.length];
+
+                // Check if the birth date falls between the start dates of two signs.
+                if ((birthMonth === currentSign.start.month && birthDay >= currentSign.start.day) ||
+                    (birthMonth === nextSign.start.month && birthDay < nextSign.start.day)) {
+                    sunSign = currentSign.sign;
+                    break;
                 }
             }
-            throw new Error('API request failed after multiple retries.');
-        };
+            return sunSign;
+        }
 
         // This is the main function that runs when the form is submitted.
-        form.addEventListener('submit', async (e) => {
-            // e.preventDefault() stops the form from reloading the page,
-            // which is the default browser behavior.
+        form.addEventListener('submit', (e) => {
+            // e.preventDefault() stops the form from reloading the page.
             e.preventDefault();
-
-            // Start of the loading state
-            // ===================================
-
-            // Disable the button to prevent multiple submissions.
-            submitBtn.disabled = true;
-            // Clear the button text.
-            buttonText.textContent = '';
-            // Insert the SVG code for the loading spinner into the button.
-            submitBtn.innerHTML = '<svg class="animate-spin-fast h-5 w-5 text-gray-900" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-            // Hide the results container from the previous submission, if any.
-            resultsContainer.classList.add('hidden');
 
             // Get the values from the form inputs.
             const personName = personNameInput.value;
-            const birthDate = birthDateInput.value;
-            const birthTime = birthTimeInput.value;
-            const birthLocation = birthLocationInput.value;
-            const language = languageSelect.value;
-            
-            console.log('Fetching astrological details for:', { personName, birthDate, birthTime, birthLocation, language });
+            const birthDateValue = birthDateInput.value;
 
-            try {
-                // Gemini API Call for Dynamic Forecast
-                // ===================================
-                const t = translations[language];
-                // The prompt now explicitly asks for a JSON object and nothing else,
-                // so we don't need the generationConfig.responseMimeType property.
-                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.`;
-                
-                const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-                const payload = {
-                    contents: chatHistory,
-                    generationConfig: {
-                        // We are now explicitly requesting a JSON response with a defined schema.
-                        // This is a much more reliable way to ensure the response is parsable.
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "OBJECT",
-                            properties: {
-                                sunSign: { type: "STRING" },
-                                moonSign: { type: "STRING" },
-                                ascendant: { type: "STRING" },
-                                houseDetails: { type: "STRING" },
-                                planetPositions: { type: "STRING" },
-                                monthlyRashifal: { type: "STRING" },
-                                annualRashifal: { type: "STRING" }
-                            }
-                        }
-                    }
-                 };
-                
-                const apiKey = "";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                
-                const response = await fetchWithRetry(apiUrl, payload);
-                const result = await response.json();
-                
-                if (response.ok && result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                        const rawText = result.candidates[0].content.parts[0].text;
-                        let details;
-                        try {
-                            // Primary attempt: try to parse the response directly
-                            details = JSON.parse(rawText);
-                        } catch (jsonError) {
-                            console.warn('Direct JSON parsing failed. Attempting fallback method...');
-                            // Fallback attempt: try to extract JSON from the text
-                            const jsonString = extractJsonFromResponse(rawText);
-                            if (jsonString) {
-                                try {
-                                    details = JSON.parse(jsonString);
-                                } catch (fallbackJsonError) {
-                                    // Fallback failed as well
-                                    console.error('Fallback JSON parsing failed:', fallbackJsonError, rawText);
-                                    details = null;
-                                }
-                            } else {
-                                // No JSON found at all
-                                console.error('API response did not contain a valid JSON object.', rawText);
-                                details = null;
-                            }
-                        }
-
-                        if (details) {
-                            displayResults(details, language);
-                        } else {
-                            // Both parsing methods failed, show a detailed error
-                            resultsContainer.classList.remove('hidden');
-                            resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. **Failed to parse JSON data.** Please try again. Raw response for debugging: <pre class="mt-4 p-4 bg-gray-800 rounded-lg text-sm text-gray-300 whitespace-pre-wrap">${rawText}</pre></p>`;
-                        }
-                } else {
-                    const errorMessage = `API response structure is unexpected or content is missing. Status: ${response.status}. Error: ${response.statusText}.`;
-                    console.error(errorMessage, result);
-                    resultsContainer.classList.remove('hidden');
-                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. The server responded with an empty or invalid result. **${errorMessage}** Please try again.</p>`;
-                }
-            } catch (error) {
-                console.error('Error fetching astrology details:', error);
-                resultsContainer.classList.remove('hidden');
-                // Check specifically for the 403 error message
-                if (error.message.includes('403 Forbidden')) {
-                    resultsContainer.innerHTML = `<div class="bg-red-900 border-l-4 border-red-500 text-red-100 p-4" role="alert">
-                                                    <p class="font-bold">API Key Error</p>
-                                                    <p>I received a **403 Forbidden** error from the API. This indicates a problem with the API key or its permissions. Please ensure your API key is correctly configured and has the necessary access.</p>
-                                                </div>`;
-                } else {
-                    // For all other errors, show a generic message.
-                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred: **${error.message}**. Please try again.</p>`;
-                }
-            } finally {
-                // End of the loading state
-                // ===================================
-
-                // Re-enable the button.
-                submitBtn.disabled = false;
-                // Rebuild the button's content to ensure the correct text and icon are used.
-                submitBtn.innerHTML = `<i data-lucide="search" size="20" class="search-icon"></i><span id="button-text">${translations[languageSelect.value].button}</span>`;
-                // Re-render the icons to make sure the search icon appears.
-                lucide.createIcons();
+            // Simple validation to ensure the date is entered.
+            if (!birthDateValue) {
+                alert('Please enter a valid date of birth.');
+                return;
             }
+
+            // Create a Date object from the input value.
+            const birthDate = new Date(birthDateValue);
+
+            // Calculate the Sun Sign using our custom function.
+            const sunSign = getSunSign(birthDate);
+
+            // Display the results to the user.
+            displayResults(personName, sunSign);
         });
 
-        // This function takes the astrological data and the language,
+        // This function takes the person's name and Sun Sign,
         // then generates the HTML to display the results in the results container.
-        function displayResults(details, language) {
-            const t = translations[language]; // Gets the correct translation object
+        function displayResults(name, sign) {
             resultsContainer.classList.remove('hidden'); // Makes the results container visible
-            // Sets the inner HTML of the results container using a template literal.
-            // This allows us to easily insert variables like `t.title` and `details.sunSign`.
             resultsContainer.innerHTML = `
-                <h2 class="text-2xl font-bold mb-4 text-center text-yellow-300">${t.title}</h2>
+                <h2 class="text-2xl font-bold mb-4 text-center text-yellow-300">Your Astrological Profile</h2>
                 <div class="space-y-4 text-gray-300">
-                    <p><strong>${t.hello}</strong> <span class="font-semibold text-yellow-200">${personNameInput.value}</span></p>
-                    <p><strong>${t.sunSign}</strong> <span class="font-semibold text-yellow-200">${details.sunSign}</span></p>
-                    <p><strong>${t.moonSign}</strong> <span class="font-semibold text-yellow-200">${details.moonSign}</span></p>
-                    <p><strong>${t.ascendant}</strong> <span class="font-semibold text-yellow-200">${details.ascendant}</span></p>
-                    <p><strong>${t.houseDetails}</strong> ${details.houseDetails}</p>
-                    <p><strong>${t.planetPositions}</strong> ${details.planetPositions}</p>
-                    <hr class="border-gray-700 my-4" />
-                    <h3 class="text-xl font-bold text-yellow-300">${t.monthlyRashifal}</h3>
-                    <p>${details.monthlyRashifal}</p>
-                    <h3 class="text-xl font-bold text-yellow-300">${t.annualRashifal}</h3>
-                    <p>${details.annualRashifal}</p>
+                    <p>Hello <span class="font-semibold text-yellow-200">${name || 'Friend'}</span>,</p>
+                    <p>Based on your date of birth, your Sun Sign is:</p>
+                    <p class="text-center text-5xl font-extrabold text-yellow-400 drop-shadow-xl">${sign}</p>
                 </div>
             `;
         }
