@@ -217,9 +217,14 @@
             if (match && match[1]) {
                 return match[1]; // Return content inside the ```json block
             } else if (match && match[2]) {
-                return match[2]; // Return content of a simple JSON object
+                // Ensure it's a valid JSON object by trimming whitespace before returning
+                const trimmed = match[2].trim();
+                // A quick check to see if it starts with { and ends with }
+                if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                    return trimmed;
+                }
             }
-            return null; // No JSON found
+            return null; // No valid JSON found
         };
 
         /**
@@ -292,26 +297,15 @@
                 // Gemini API Call for Dynamic Forecast
                 // ===================================
                 const t = translations[language];
-                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The response must be a JSON object with the following properties: "sunSign", "moonSign", "ascendant", "houseDetails", "planetPositions", "monthlyRashifal", and "annualRashifal". The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.`;
+                // The prompt now explicitly asks for a JSON object and nothing else,
+                // so we don't need the generationConfig.responseMimeType property.
+                const prompt = `Act as an expert astrologer. Generate a detailed and helpful astrology forecast for a person with the following details: Name: ${personName}, Date of Birth: ${birthDate}, Time of Birth: ${birthTime}, Birth Location: ${birthLocation}. The response must be a JSON object and nothing else. The JSON object must have the following properties: "sunSign", "moonSign", "ascendant", "houseDetails", "planetPositions", "monthlyRashifal", and "annualRashifal". The text for each property must be in ${language}. Ensure the "planetPositions" property uses the degree symbol '°' correctly.`;
                 
                 const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
                 const payload = {
                      contents: chatHistory,
-                     generationConfig: {
-                         responseMimeType: "application/json",
-                         responseSchema: {
-                             type: "OBJECT",
-                             properties: {
-                                "sunSign": { "type": "STRING" },
-                                "moonSign": { "type": "STRING" },
-                                "ascendant": { "type": "STRING" },
-                                "houseDetails": { "type": "STRING" },
-                                "planetPositions": { "type": "STRING" },
-                                "monthlyRashifal": { "type": "STRING" },
-                                "annualRashifal": { "type": "STRING" }
-                            }
-                         }
-                     }
+                     // We've removed the generationConfig for structured output to improve reliability.
+                     // The model will now return a text string, which we will parse manually.
                  };
                 
                 const apiKey = "";
@@ -323,27 +317,27 @@
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
-                        const rawJson = result.candidates[0].content.parts[0].text;
-                        const jsonString = extractJsonFromResponse(rawJson);
+                        const rawText = result.candidates[0].content.parts[0].text;
+                        const jsonString = extractJsonFromResponse(rawText);
 
                         if (jsonString) {
                             try {
                                 const details = JSON.parse(jsonString);
                                 displayResults(details, language);
                             } catch (jsonError) {
-                                console.error('Failed to parse JSON from API response:', jsonError, rawJson);
+                                console.error('Failed to parse JSON from API response:', jsonError, rawText);
                                 resultsContainer.classList.remove('hidden');
-                                resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I got an invalid response from the server. Please try again.</p>`;
+                                resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I received an invalid response from the server. Please try again. The raw response was: <pre>${rawText}</pre></p>`;
                             }
                         } else {
-                            console.error('API response did not contain a valid JSON object.', rawJson);
+                            console.error('API response did not contain a valid JSON object.', rawText);
                             resultsContainer.classList.remove('hidden');
                             resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast due to an unexpected format from the server. Please try again.</p>`;
                         }
                 } else {
                     console.error('API response structure is unexpected or content is missing', result);
                     resultsContainer.classList.remove('hidden');
-                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. Please check your details and try again.</p>`;
+                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. The server responded with an empty or invalid result. Please try again.</p>`;
                 }
             } catch (error) {
                 // If a network error or other unhandled error occurs during the "API call", this block will run.
