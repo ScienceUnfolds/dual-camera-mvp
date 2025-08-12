@@ -182,8 +182,8 @@
                 houseDetails: 'House Details:',
                 planetPositions: 'Planet Positions:',
                 dailyHoroscope: 'Daily Horoscope:',
-                monthlyRashifal: 'Monthly Rashifal (Horoscope):',
-                annualRashifal: 'Annual Rashifal (Horoscope):',
+                monthlyRashifal: 'Monthly Horoscope:',
+                annualRashifal: 'Annual Horoscope:',
                 familySituation: 'Family Situation:',
                 carefulAbout: 'Be Careful About:',
                 dailyPlanetImpact: 'Planetary Impact Today:',
@@ -195,7 +195,9 @@
                 relationshipWithSpouse: 'Relationship with Spouse:',
                 dailyEconomicStatus: 'Economic Status Today:',
                 dailyHealthStatus: 'Health Status Today:',
-                ageWiseHoroscope: 'Age-wise Horoscope:'
+                ageWiseHoroscope: 'Age-wise Horoscope:',
+                currentAgeDetails: 'Current Age Details:',
+                familyMemberHoroscope: 'Horoscope for Family Members:'
             },
             ne: {
                 button: 'मेरो ज्योतिष विवरण प्राप्त गर्नुहोस्',
@@ -220,7 +222,9 @@
                 relationshipWithSpouse: 'जीवनसाथीसँगको सम्बन्ध:',
                 dailyEconomicStatus: 'आजको आर्थिक स्थिति:',
                 dailyHealthStatus: 'आजको स्वास्थ्य स्थिति:',
-                ageWiseHoroscope: 'उमेरअनुसारको राशिफल:'
+                ageWiseHoroscope: 'उमेरअनुसारको राशिफल:',
+                currentAgeDetails: 'वर्तमान उमेरको विवरण:',
+                familyMemberHoroscope: 'परिवारका सदस्यहरूको राशिफल:'
             },
             hi: {
                 button: 'मेरी ज्योतिष विवरण प्राप्त करें',
@@ -245,7 +249,9 @@
                 relationshipWithSpouse: 'जीवनसाथी के साथ संबंध:',
                 dailyEconomicStatus: 'आज की आर्थिक स्थिति:',
                 dailyHealthStatus: 'आज की स्वास्थ्य स्थिति:',
-                ageWiseHoroscope: 'उम्र के अनुसार राशिफल:'
+                ageWiseHoroscope: 'उम्र के अनुसार राशिफल:',
+                currentAgeDetails: 'वर्तमान आयु का विवरण:',
+                familyMemberHoroscope: 'परिवार के सदस्यों का राशिफल:'
             },
             ta: {
                 button: 'எனது ஜோதிட விவரங்களைப் பெறுங்கள்',
@@ -270,7 +276,9 @@
                 relationshipWithSpouse: 'துணையிடமிருந்து உறவு:',
                 dailyEconomicStatus: 'இன்றைய பொருளாதார நிலை:',
                 dailyHealthStatus: 'இன்றைய சுகாதார நிலை:',
-                ageWiseHoroscope: 'வயது வாரியான ராசி பலன்:'
+                ageWiseHoroscope: 'வயது வாரியான ராசி பலன்:',
+                currentAgeDetails: 'தற்போதைய வயது விவரங்கள்:',
+                familyMemberHoroscope: 'குடும்ப உறுப்பினர்களுக்கான ராசி பலன்:'
             },
             bn: {
                 button: 'আমার জ্যোতিষ বিবরণ পান',
@@ -295,7 +303,9 @@
                 relationshipWithSpouse: 'জীবনসঙ্গীর সঙ্গে সম্পর্ক:',
                 dailyEconomicStatus: 'আজকের আর্থিক অবস্থা:',
                 dailyHealthStatus: 'আজকের স্বাস্থ্য অবস্থা:',
-                ageWiseHoroscope: 'বয়স অনুযায়ী রাশিফল:'
+                ageWiseHoroscope: 'বয়স অনুযায়ী রাশিফল:',
+                currentAgeDetails: 'বর্তমান বয়সের বিবরণ:',
+                familyMemberHoroscope: 'পরিবারের সদস্যদের জন্য রাশিফল:'
             },
             new: { // Newari language
                 button: 'जिगु ज्योतिष विवरण काये',
@@ -320,7 +330,9 @@
                 relationshipWithSpouse: 'जीवनसाथीनाप सम्बन्ध:',
                 dailyEconomicStatus: 'थौंया आर्थिक स्थिति:',
                 dailyHealthStatus: 'थौंया स्वास्थ्य स्थिति:',
-                ageWiseHoroscope: 'दँ कथंया राशिफल:'
+                ageWiseHoroscope: 'उमेरकथंया राशिफल:',
+                currentAgeDetails: 'आःया उमेरया विवरण:',
+                familyMemberHoroscope: 'परिवारया दुजःपिनिगु राशिफल:'
             }
         };
 
@@ -447,16 +459,15 @@
                 - dailyHoroscope (an object with nested properties)
                   - planetImpact: Describe the impact of a specific planet's position today on the user.
                   - overallForecast: A general daily forecast.
-                  - relationship: (an object with nested properties for relationships with father, mother, sibling, children, and spouse)
+                  - relationships: (an object with nested properties for relationships with father, mother, sibling, children, and spouse, each with a detailed forecast)
                   - economicStatus: Describe the user's economic status for the day.
                   - healthStatus: Describe the user's health status for the day.
-                - monthlyRashifal
-                - annualRashifal
+                - monthlyHoroscope
+                - annualHoroscope
                 - familySituation: (a general overview)
                 - carefulAbout
-                - ageWiseHoroscope (an object with nested properties)
-                  - ageBin: The current 5-year age bin (e.g., "20-25 years").
-                  - forecast: A forecast specific to the user's current age bin.
+                - familyMembersHoroscope: (an array of objects, where each object has 'relationship' and 'forecast')
+                - ageWiseHoroscope: (an array of objects, where each object has 'ageBin' and 'forecast'. The forecast for the current age bin should be more detailed than the others. Include a few age bins from the past and future, and the current age bin.)
                 - The response should contain a detailed and helpful forecast, and the values for all properties must be strings.`;
 
                 
@@ -478,7 +489,7 @@
                                     properties: {
                                         planetImpact: { type: "STRING" },
                                         overallForecast: { type: "STRING" },
-                                        relationship: {
+                                        relationships: {
                                             type: "OBJECT",
                                             properties: {
                                                 father: { type: "STRING" },
@@ -492,15 +503,28 @@
                                         healthStatus: { type: "STRING" }
                                     }
                                 },
-                                monthlyRashifal: { type: "STRING" },
-                                annualRashifal: { type: "STRING" },
+                                monthlyHoroscope: { type: "STRING" },
+                                annualHoroscope: { type: "STRING" },
                                 familySituation: { type: "STRING" },
                                 carefulAbout: { type: "STRING" },
+                                familyMembersHoroscope: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            relationship: { type: "STRING" },
+                                            forecast: { type: "STRING" }
+                                        }
+                                    }
+                                },
                                 ageWiseHoroscope: {
-                                    type: "OBJECT",
-                                    properties: {
-                                        ageBin: { type: "STRING" },
-                                        forecast: { type: "STRING" }
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            ageBin: { type: "STRING" },
+                                            forecast: { type: "STRING" }
+                                        }
                                     }
                                 }
                             }
@@ -585,6 +609,20 @@
         function displayResults(details, language) {
             const t = translations[language]; // Gets the correct translation object
             resultsContainer.classList.remove('hidden'); // Makes the results container visible
+
+            let ageWiseHtml = details.ageWiseHoroscope.map(item => `
+                <div class="p-4 rounded-lg bg-gray-800 border border-gray-700">
+                    <h4 class="text-xl font-bold text-yellow-200">${item.ageBin}</h4>
+                    <p>${item.forecast}</p>
+                </div>
+            `).join('');
+
+            let familyMembersHtml = details.familyMembersHoroscope.map(item => `
+                <li class="p-2 rounded-lg bg-gray-800 border border-gray-700">
+                    <strong class="text-yellow-200">${item.relationship}:</strong> ${item.forecast}
+                </li>
+            `).join('');
+
             // Sets the inner HTML of the results container using a template literal.
             // This allows us to easily insert variables like `t.title` and `details.sunSign`.
             resultsContainer.innerHTML = `
@@ -598,7 +636,7 @@
                     <p><strong>${t.planetPositions}</strong> ${details.planetPositions}</p>
                     <hr class="border-gray-700 my-4" />
                     
-                    <!-- New, detailed Daily Horoscope Section -->
+                    <!-- Daily Horoscope Section -->
                     <h3 class="text-2xl font-bold text-yellow-300">${t.dailyHoroscope}</h3>
                     <p class="font-semibold">${details.dailyHoroscope.overallForecast}</p>
                     
@@ -606,12 +644,12 @@
                     <p>${details.dailyHoroscope.planetImpact}</p>
                     
                     <h4 class="text-xl font-bold text-yellow-200">${t.dailyRelationship}</h4>
-                    <ul class="list-disc list-inside ml-4 space-y-1">
-                        <li><strong>${t.relationshipWithFather}</strong> ${details.dailyHoroscope.relationship.father}</li>
-                        <li><strong>${t.relationshipWithMother}</strong> ${details.dailyHoroscope.relationship.mother}</li>
-                        <li><strong>${t.relationshipWithSiblings}</strong> ${details.dailyHoroscope.relationship.sibling}</li>
-                        <li><strong>${t.relationshipWithChildren}</strong> ${details.dailyHoroscope.relationship.children}</li>
-                        <li><strong>${t.relationshipWithSpouse}</strong> ${details.dailyHoroscope.relationship.spouse}</li>
+                    <ul class="list-disc list-inside ml-4 space-y-2">
+                        <li><strong>${t.relationshipWithFather}</strong> ${details.dailyHoroscope.relationships.father}</li>
+                        <li><strong>${t.relationshipWithMother}</strong> ${details.dailyHoroscope.relationships.mother}</li>
+                        <li><strong>${t.relationshipWithSiblings}</strong> ${details.dailyHoroscope.relationships.sibling}</li>
+                        <li><strong>${t.relationshipWithChildren}</strong> ${details.dailyHoroscope.relationships.children}</li>
+                        <li><strong>${t.relationshipWithSpouse}</strong> ${details.dailyHoroscope.relationships.spouse}</li>
                     </ul>
                     
                     <h4 class="text-xl font-bold text-yellow-200">${t.dailyEconomicStatus}</h4>
@@ -619,22 +657,32 @@
 
                     <h4 class="text-xl font-bold text-yellow-200">${t.dailyHealthStatus}</h4>
                     <p>${details.dailyHoroscope.healthStatus}</p>
-
+                    
                     <hr class="border-gray-700 my-4" />
                     
-                    <h3 class="text-xl font-bold text-yellow-300">${t.monthlyRashifal}</h3>
-                    <p>${details.monthlyRashifal}</p>
-                    <h3 class="text-xl font-bold text-yellow-300">${t.annualRashifal}</h3>
-                    <p>${details.annualRashifal}</p>
+                    <h3 class="text-xl font-bold text-yellow-300">${t.monthlyHoroscope}</h3>
+                    <p>${details.monthlyHoroscope}</p>
+                    <h3 class="text-xl font-bold text-yellow-300">${t.annualHoroscope}</h3>
+                    <p>${details.annualHoroscope}</p>
+                    
                     <hr class="border-gray-700 my-4" />
+                    
                     <h3 class="text-xl font-bold text-yellow-300">${t.familySituation}</h3>
                     <p>${details.familySituation}</p>
+                    
+                    <!-- Family Members Horoscope Section -->
+                    <h3 class="text-2xl font-bold text-yellow-300 mt-6">${t.familyMemberHoroscope}</h3>
+                    <ul class="list-none space-y-2">
+                        ${familyMembersHtml}
+                    </ul>
+                    
                     <hr class="border-gray-700 my-4" />
                     
-                    <!-- New Age-Wise Horoscope Section -->
-                    <h3 class="text-2xl font-bold text-yellow-300">${t.ageWiseHoroscope}</h3>
-                    <p class="font-semibold">Current Age Bin: ${details.ageWiseHoroscope.ageBin}</p>
-                    <p>${details.ageWiseHoroscope.forecast}</p>
+                    <!-- Age-Wise Horoscope Section -->
+                    <h3 class="text-2xl font-bold text-yellow-300 mt-6">${t.ageWiseHoroscope}</h3>
+                    <div class="space-y-4">
+                        ${ageWiseHtml}
+                    </div>
 
                     <hr class="border-gray-700 my-4" />
                     <h3 class="text-xl font-bold text-yellow-300">${t.carefulAbout}</h3>
