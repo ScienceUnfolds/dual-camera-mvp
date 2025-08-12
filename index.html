@@ -207,7 +207,6 @@
             // which is the default browser behavior.
             e.preventDefault();
 
-            // ===================================
             // Start of the loading state
             // ===================================
 
@@ -230,7 +229,6 @@
             console.log('Fetching astrological details for:', { personName, birthDate, birthTime, birthLocation, language });
 
             try {
-                // ===================================
                 // Gemini API Call for Dynamic Forecast
                 // ===================================
                 const t = translations[language];
@@ -274,18 +272,17 @@
                         const details = JSON.parse(json);
                         displayResults(details, language);
                 } else {
-                    console.error('API response structure is unexpected or content is missing');
+                    console.error('API response structure is unexpected or content is missing', result);
                     resultsContainer.classList.remove('hidden');
-                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. Please try again.</p>`;
+                    resultsContainer.innerHTML = `<p class="text-red-400 text-center">Sorry, I couldn't generate a forecast. Please check your details and try again.</p>`;
                 }
             } catch (error) {
                 // If an error occurs during the "API call", this block will run.
                 console.error('Error fetching astrology details:', error);
                 // Make the results container visible to show the error.
                 resultsContainer.classList.remove('hidden');
-                resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred. Please try again.</p>`;
+                resultsContainer.innerHTML = `<p class="text-red-400 text-center">An error occurred. Please try again. Check your browser console for more details.</p>`;
             } finally {
-                // ===================================
                 // End of the loading state
                 // ===================================
 
