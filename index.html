@@ -122,7 +122,6 @@
                 }
             } catch (e) {
                 console.error("Firebase Auth error:", e);
-                // Continue even if auth fails, the API key might be enough.
             }
 
             const makeApiCall = async (retries = 0) => {
@@ -172,6 +171,9 @@
 
                     const result = await response.json();
                     const jsonString = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!jsonString) {
+                         throw new Error('API response was empty or malformed.');
+                    }
                     return JSON.parse(jsonString);
 
                 } catch (e) {
@@ -190,7 +192,7 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Reset state
+            // Reset state and show loading spinner
             resultsContainer.innerHTML = '';
             errorMessage.textContent = '';
             errorMessage.classList.add('hidden');
