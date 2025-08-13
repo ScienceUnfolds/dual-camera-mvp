@@ -141,6 +141,16 @@
             const alertMessage = document.getElementById('alert-message');
             const alertOkBtn = document.getElementById('alert-ok-btn');
 
+            // Load saved user details from local storage
+            const savedDetails = localStorage.getItem('horoscopeUserDetails');
+            if (savedDetails) {
+                const userDetails = JSON.parse(savedDetails);
+                document.getElementById('name').value = userDetails.name || '';
+                document.getElementById('dob').value = userDetails.dob || '';
+                document.getElementById('birthplace').value = userDetails.birthplace || '';
+                document.getElementById('language').value = userDetails.language || 'en';
+            }
+
             // Set up a custom alert function to replace the browser's alert()
             function showAlert(title, message) {
                 alertTitle.textContent = title;
@@ -161,6 +171,10 @@
                 const dob = document.getElementById('dob').value;
                 const birthplace = document.getElementById('birthplace').value;
                 const language = document.getElementById('language').value;
+
+                // Save user details to local storage
+                const userDetails = { name, dob, birthplace, language };
+                localStorage.setItem('horoscopeUserDetails', JSON.stringify(userDetails));
 
                 // Show loading indicator and hide results
                 loading.classList.remove('hidden');
@@ -302,7 +316,7 @@
                 document.getElementById('daily-horoscope').innerHTML = `<p class="text-gray-600">${data.daily_horoscope}</p>`;
                 document.getElementById('weekly-horoscope').innerHTML = `<p class="text-gray-600">${data.weekly_horoscope}</p>`;
                 document.getElementById('monthly-horoscope').innerHTML = `<p class="text-gray-600">${data.monthly_horoscope}</p>`;
-                document.getElementById('yearly-horoscope').innerHTML = `<p class="text-gray-600">${data.yearly_horoscope}</p>`;
+                document.html = `<p class="text-gray-600">${data.yearly_horoscope}</p>`;
                 document.getElementById('life-stages').innerHTML = `<p class="text-gray-600">${data.life_stages}</p>`;
                 document.getElementById('relationships').innerHTML = `<p class="text-gray-600">${data.relationships}</p>`;
             }
