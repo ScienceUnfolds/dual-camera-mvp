@@ -69,8 +69,14 @@
 
             <!-- Date of Birth Input -->
             <div>
-                <label for="dob" id="label-dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
-                <input type="date" id="dob" name="dob" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <div class="flex items-center space-x-2 mb-1">
+                    <label for="dob" id="label-dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                    <select id="date-format" class="text-sm border border-gray-300 rounded-md py-1 px-2 focus:outline-none">
+                        <option value="ad">AD</option>
+                        <option value="bs">BS</option>
+                    </select>
+                </div>
+                <input type="text" id="dob" name="dob" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="YYYY-MM-DD">
             </div>
 
             <!-- Birth Place Input -->
@@ -119,6 +125,19 @@
                     </button>
                     <div id="daily-horoscope-content" class="accordion-content p-4 bg-white">
                         <div id="daily-horoscope" class="text-gray-600">
+                            <p>Loading...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Relationship Accordion Item -->
+                <div class="border-t border-gray-200">
+                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="relationships-content">
+                        <span class="text-lg font-medium text-gray-700 flex items-center"><i class="fas fa-heart mr-3 text-red-500"></i><span id="relationships-title">Daily Relationship Insights</span></span>
+                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
+                    </button>
+                    <div id="relationships-content" class="accordion-content p-4 bg-white">
+                        <div id="relationships" class="text-gray-600">
                             <p>Loading...</p>
                         </div>
                     </div>
@@ -176,12 +195,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Relationships Section -->
-            <div id="relationships-card" class="bg-gray-50 p-6 rounded-lg shadow-sm">
-                <h2 id="relationships-header" class="text-2xl font-semibold text-gray-800 mb-4">Daily Relationship Insights</h2>
-                <div id="relationships"></div>
-            </div>
         </div>
 
         <!-- Custom Alert/Error Modal -->
@@ -210,6 +223,8 @@
             const alertMessage = document.getElementById('alert-message');
             const alertOkBtn = document.getElementById('alert-ok-btn');
             const languageSelect = document.getElementById('language');
+            const dateFormatSelect = document.getElementById('date-format');
+            const dobInput = document.getElementById('dob');
 
             const translations = {
                 en: {
@@ -219,6 +234,8 @@
                     labelName: 'Full Name',
                     placeholderName: 'e.g., John Doe',
                     labelDob: 'Date of Birth',
+                    placeholderDobAd: 'YYYY-MM-DD',
+                    placeholderDobBs: 'YYYY-MM-DD BS',
                     labelBirthplace: 'Birth Place',
                     placeholderBirthplace: 'e.g., Kathmandu, Nepal',
                     submitBtn: 'Get My Horoscope',
@@ -230,14 +247,16 @@
                     astrologicalDetailsHeader: 'Astrological Details',
                     horoscopeHeader: 'Horoscopes',
                     dailyHoroscopeTitle: 'Daily Horoscope',
+                    relationshipsTitle: 'Daily Relationship Insights',
                     weeklyHoroscopeTitle: 'Weekly Horoscope',
                     monthlyHoroscopeTitle: 'Monthly Horoscope',
                     yearlyHoroscopeTitle: 'Yearly Horoscope',
                     lifeStagesTitle: 'Life Stages',
-                    relationshipsHeader: 'Daily Relationship Insights',
                     userInfoHeader: 'User Details',
                     dateOfBirth: 'Date of Birth',
                     birthPlace: 'Birth Place',
+                    dateformatAd: 'AD',
+                    dateformatBs: 'BS',
                 },
                 ne: {
                     mainTitle: 'व्यक्तिगत राशिफल र ज्योतिष',
@@ -246,6 +265,8 @@
                     labelName: 'पूरा नाम',
                     placeholderName: 'उदाहरण: जोन डो',
                     labelDob: 'जन्म मिति',
+                    placeholderDobAd: 'YYYY-MM-DD',
+                    placeholderDobBs: 'YYYY-MM-DD BS',
                     labelBirthplace: 'जन्म स्थान',
                     placeholderBirthplace: 'उदाहरण: काठमाडौं, नेपाल',
                     submitBtn: 'मेरो राशिफल प्राप्त गर्नुहोस्',
@@ -257,14 +278,16 @@
                     astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
                     horoscopeHeader: 'राशिफल',
                     dailyHoroscopeTitle: 'दैनिक राशिफल',
+                    relationshipsTitle: 'दैनिक सम्बन्धको जानकारी',
                     weeklyHoroscopeTitle: 'साप्ताहिक राशिफल',
                     monthlyHoroscopeTitle: 'मासिक राशिफल',
                     yearlyHoroscopeTitle: 'वार्षिक राशिफल',
                     lifeStagesTitle: 'जीवनका चरणहरू',
-                    relationshipsHeader: 'दैनिक सम्बन्धको जानकारी',
                     userInfoHeader: 'प्रयोगकर्ता विवरण',
                     dateOfBirth: 'जन्म मिति',
                     birthPlace: 'जन्म स्थान',
+                    dateformatAd: 'ई.सं.',
+                    dateformatBs: 'वि.सं.',
                 },
                 hi: {
                     mainTitle: 'व्यक्तिगत राशिफल और ज्योतिष',
@@ -273,6 +296,8 @@
                     labelName: 'पूरा नाम',
                     placeholderName: 'उदाहरण: जॉन डो',
                     labelDob: 'जन्म तिथि',
+                    placeholderDobAd: 'YYYY-MM-DD',
+                    placeholderDobBs: 'YYYY-MM-DD BS',
                     labelBirthplace: 'जन्म स्थान',
                     placeholderBirthplace: 'उदाहरण: काठमांडू, नेपाल',
                     submitBtn: 'मेरा राशिफल प्राप्त करें',
@@ -284,14 +309,16 @@
                     astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
                     horoscopeHeader: 'राशिफल',
                     dailyHoroscopeTitle: 'दैनिक राशिफल',
+                    relationshipsTitle: 'दैनिक संबंध अंतर्दृष्टि',
                     weeklyHoroscopeTitle: 'साप्ताहिक राशिफल',
                     monthlyHoroscopeTitle: 'मासिक राशिफल',
                     yearlyHoroscopeTitle: 'वार्षिक राशिफल',
                     lifeStagesTitle: 'जीवन के चरण',
-                    relationshipsHeader: 'दैनिक संबंध अंतर्दृष्टि',
                     userInfoHeader: 'उपयोगकर्ता विवरण',
                     dateOfBirth: 'जन्म तिथि',
                     birthPlace: 'जन्म स्थान',
+                    dateformatAd: 'ईस्वी',
+                    dateformatBs: 'बिक्रम संवत',
                 }
             };
 
@@ -310,12 +337,41 @@
                 document.getElementById('astrological-details-header').textContent = translations[lang].astrologicalDetailsHeader;
                 document.getElementById('horoscope-header').textContent = translations[lang].horoscopeHeader;
                 document.getElementById('daily-horoscope-title').textContent = translations[lang].dailyHoroscopeTitle;
+                document.getElementById('relationships-title').textContent = translations[lang].relationshipsTitle;
                 document.getElementById('weekly-horoscope-title').textContent = translations[lang].weeklyHoroscopeTitle;
                 document.getElementById('monthly-horoscope-title').textContent = translations[lang].monthlyHoroscopeTitle;
                 document.getElementById('yearly-horoscope-title').textContent = translations[lang].yearlyHoroscopeTitle;
                 document.getElementById('life-stages-title').textContent = translations[lang].lifeStagesTitle;
-                document.getElementById('relationships-header').textContent = translations[lang].relationshipsHeader;
                 document.getElementById('user-info-header').textContent = translations[lang].userInfoHeader;
+
+                // Update placeholder for date input based on format
+                if (dateFormatSelect.value === 'ad') {
+                    dobInput.placeholder = translations[lang].placeholderDobAd;
+                } else {
+                    dobInput.placeholder = translations[lang].placeholderDobBs;
+                }
+            }
+
+            // Function to convert BS to AD
+            function bsToAd(bsDate) {
+                const [bsYear, bsMonth, bsDay] = bsDate.split('-').map(Number);
+                const adYear = bsYear - 56;
+                const adDate = new Date(adYear, bsMonth - 1, bsDay - 15);
+                
+                // Adjust for the month and day difference
+                if (adDate.getMonth() !== bsMonth - 1) {
+                    adDate.setMonth(bsMonth - 1);
+                }
+                if (adDate.getDate() > 15) {
+                    adDate.setDate(adDate.getDate() - 15);
+                } else {
+                    adDate.setMonth(adDate.getMonth() - 1);
+                    adDate.setDate(adDate.getDate() + 30 - 15); // Rough correction
+                }
+
+                // A more accurate conversion would require a comprehensive mapping of BS dates.
+                // For this example, this approximation will serve.
+                return `${adDate.getFullYear()}-${String(adDate.getMonth() + 1).padStart(2, '0')}-${String(adDate.getDate()).padStart(2, '0')}`;
             }
 
             // Load saved user details from local storage
@@ -326,8 +382,19 @@
                 document.getElementById('dob').value = userDetails.dob || '';
                 document.getElementById('birthplace').value = userDetails.birthplace || '';
                 document.getElementById('language').value = userDetails.language || 'en';
+                document.getElementById('date-format').value = userDetails.dateFormat || 'ad';
             }
             updateLanguage(languageSelect.value);
+
+            // Update placeholder when date format changes
+            dateFormatSelect.addEventListener('change', () => {
+                const lang = languageSelect.value;
+                if (dateFormatSelect.value === 'ad') {
+                    dobInput.placeholder = translations[lang].placeholderDobAd;
+                } else {
+                    dobInput.placeholder = translations[lang].placeholderDobBs;
+                }
+            });
 
             // Accordion functionality
             const accordionHeaders = document.querySelectorAll('.accordion-header');
@@ -379,16 +446,24 @@
                 e.preventDefault();
 
                 const name = document.getElementById('name').value;
-                const dob = document.getElementById('dob').value;
+                const dobInputVal = document.getElementById('dob').value;
                 const birthplace = document.getElementById('birthplace').value;
                 const language = document.getElementById('language').value;
+                const dateFormat = document.getElementById('date-format').value;
 
-                if (!name || !dob || !birthplace) {
+                if (!name || !dobInputVal || !birthplace) {
                     showAlert(translations[language].errorTitle, translations[language].errorMessage);
                     return;
                 }
+                
+                let dobForApi;
+                if (dateFormat === 'bs') {
+                    dobForApi = bsToAd(dobInputVal);
+                } else {
+                    dobForApi = dobInputVal;
+                }
 
-                const userDetails = { name, dob, birthplace, language };
+                const userDetails = { name, dob: dobForApi, birthplace, language, dateFormat };
                 localStorage.setItem('horoscopeUserDetails', JSON.stringify(userDetails));
 
                 loading.classList.remove('hidden');
@@ -397,7 +472,7 @@
                 submitBtn.innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${translations[language].pleaseWait}`;
                 
                 // Reset previous results
-                const allSections = ['daily-horoscope', 'weekly-horoscope', 'monthly-horoscope', 'yearly-horoscope', 'life-stages', 'relationships', 'astrological-details'];
+                const allSections = ['daily-horoscope', 'relationships', 'weekly-horoscope', 'monthly-horoscope', 'yearly-horoscope', 'life-stages', 'astrological-details'];
                 allSections.forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
@@ -406,32 +481,44 @@
                 });
                 
                 // Display user info immediately
-                displayUserInfo(userDetails, language);
+                displayUserInfo(userDetails, language, dateFormat);
 
+                // Start the fast-loading and slow-loading API calls simultaneously
+                const fastLoadPromise = getFastLoadingData(userDetails);
+                const lifeStagesPromise = getLifeStagesData(userDetails);
+                
                 try {
-                    const allData = await getAstrologicalData(userDetails);
-                    
-                    displayAstrologicalDetails(allData.astrological_details, allData.birthplace_description, language);
-                    displayHoroscope('daily', allData.daily_horoscope, language);
-                    displayHoroscope('weekly', allData.weekly_horoscope, language);
-                    displayHoroscope('monthly', allData.monthly_horoscope, language);
-                    displayHoroscope('yearly', allData.yearly_horoscope, language);
-                    displayHoroscope('life-stages', allData.life_stages, language);
-                    displayHoroscope('relationships', allData.relationships, language);
-                    
+                    // Wait for the fast-loading data to finish and populate the UI
+                    const fastData = await fastLoadPromise;
+                    displayAstrologicalDetails(fastData.astrological_details, fastData.birthplace_description, language);
+                    displayHoroscope('daily', fastData.daily_horoscope, language);
+                    displayHoroscope('relationships', fastData.relationships, language);
+                    displayHoroscope('weekly', fastData.weekly_horoscope, language);
+                    displayHoroscope('monthly', fastData.monthly_horoscope, language);
+                    displayHoroscope('yearly', fastData.yearly_horoscope, language);
                     resultsDiv.classList.remove('hidden');
                     document.getElementById('daily-horoscope-content').classList.add('active'); // Open daily section
                 } catch (error) {
-                    console.error('Error fetching data:', error);
+                    console.error('Error fetching fast-loading data:', error);
                     showAlert(translations[language].errorTitle, `${translations[language].errorOccurred} ${error.message}`);
                 } finally {
                     loading.classList.add('hidden');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${translations[language].submitBtn}`;
                 }
+
+                try {
+                    // Wait for the slow-loading data and populate the final section
+                    const lifeStagesData = await lifeStagesPromise;
+                    displayHoroscope('life-stages', lifeStagesData.life_stages, language);
+                } catch (error) {
+                    console.error('Error fetching life stages data:', error);
+                    showAlert(translations[language].errorTitle, `${translations[language].errorOccurred} while loading Life Stages: ${error.message}`);
+                    document.getElementById('life-stages').innerHTML = `<p class="text-red-500">Failed to load this section.</p>`;
+                }
             });
 
-            async function getAstrologicalData({ name, dob, birthplace, language }) {
+            async function getFastLoadingData({ name, dob, birthplace, language }) {
                 const nakshatraRashiData = `
                     Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
                     Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
@@ -459,7 +546,6 @@
                     - 'weekly_horoscope': An elaborated paragraph for their horoscope for the coming week.
                     - 'monthly_horoscope': An elaborated paragraph for their horoscope for the coming month.
                     - 'yearly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming year.
-                    - 'life_stages': A detailed and structured paragraph covering the person's life in distinct 10-year blocks. Address the unique challenges and opportunities in each of these life phases, starting from their birth date.
                     - 'relationships': A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids.
                 `;
 
@@ -472,13 +558,11 @@
                         "weekly_horoscope": { "type": "STRING" },
                         "monthly_horoscope": { "type": "STRING" },
                         "yearly_horoscope": { "type": "STRING" },
-                        "life_stages": { "type": "STRING" },
                         "relationships": { "type": "STRING" }
                     },
                     required: [
                         "astrological_details", "birthplace_description", "daily_horoscope",
-                        "weekly_horoscope", "monthly_horoscope", "yearly_horoscope",
-                        "life_stages", "relationships"
+                        "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships"
                     ]
                 };
 
@@ -491,7 +575,7 @@
                     }
                 };
                 
-                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
+                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                 let retryCount = 0;
@@ -542,7 +626,97 @@
                         throw error;
                     }
                 }
-                throw new Error('Max API retries exceeded.');
+                throw new Error('Max API retries exceeded for fast-loading data.');
+            }
+
+            async function getLifeStagesData({ name, dob, birthplace, language }) {
+                const nakshatraRashiData = `
+                    Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
+                    Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
+                    Rashi: मिथुन (Mithuna), नक्षेत्र: आद्रा (Audra), पुनर्वसु (Punarvasu), नामको सुरुको अक्षर: का, कि, कु, के, को, हा, हि, हु, हे, हो, दा, दी, दु, दे, दो
+                    Rashi: कर्कट (Karkata), नक्षेत्र: पुष्य (Pushya), आश्लेषा (Ashlesha), नामको सुरुको अक्षर: हु, हे, हो, डा, डि, डु, डे, डो
+                    Rashi: सिंह (Simha), नक्षेत्र: माघ (Magha), पूर्वाफाल्गुनी (Poorva Phalguni), उत्तराफाल्गुनी (Uttara Phalguni), नामको सुरुको अक्षर: मा, मी, मु, मे, मो, टा, टी, टु, टे, टो
+                    Rashi: कन्या (Kanya), नक्षेत्र: हस्त (Hastha), चित्रा (Chitra), नामको सुरुको अक्षर: पा, पी, पू, ष, ण, ठ, पे, पो, रा, री, रु, रे, रो, ता, ती, तु, ते, तो
+                    Rashi: तुला (Tula), नक्षेत्र: स्वाती (Swati), विशाखा (Visakha), नामको सुरुको अक्षर: रा, री, रु, रे, रो, ता, ती, तु, ते, तो
+                    Rashi: वृश्चिक (Vrishchika), नक्षेत्र: अनुराधा (Anuradha), ज्येष्ठा (Jyestha), नामको सुरुको अक्षर: तो, ना, नी, नु, ने, नो, या, यी, यु, ये, यो
+                    Rashi: धनु (Dhanus), नक्षेत्र: मूल (Moola), पूर्वाषाढा (Purva Ashadha), उत्तराषाढा (Uttarashada), नामको सुरुको अक्षर: ये, यो, भ, ध, फा, ढा, भे, भो, गा, गी
+                    Rashi: मकर (Makara), नक्षेत्र: श्रवण (Sravana), धनिष्ठा (Dhanishta), नामको सुरुको अक्षर: भो, जा, जी, जु, जे, जो, खा, खी, खु, खे, खो, ग, गी
+                    Rashi: कुम्भ (Kumbha), नक्षेत्र: शतभिषा (Sathabisham), पूर्वभाद्रपद (Purvabhadra), नामको सुरुको अक्षर: गो, सा, सी, सु, से, सो, दा, दी, दु, दे, दो, चा, ची
+                    Rashi: मीन (Meena), नक्षेत्र: उत्तरभाद्रपद (Uttarabhadra), रेवती (Revati), नामको सुरुको अक्षर: दि, दु, थ, झ, ञ, दे, दो, च, चि, द, दी
+                `;
+
+                const promptText = `
+                    Generate a JSON object in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} for a person with the name: ${name}, date of birth: ${dob}, and birthplace: ${birthplace}. 
+                    Use the provided Rashi and Nakshatra data. The JSON object should have a single string property named 'life_stages' which contains a detailed and structured paragraph covering the person's life in distinct 10-year blocks. Address the unique challenges and opportunities in each of these life phases, starting from their birth date.
+                `;
+
+                const schema = {
+                    type: "OBJECT",
+                    properties: { "life_stages": { "type": "STRING" } },
+                    required: ["life_stages"]
+                };
+
+                const chatHistory = [{ role: "user", parts: [{ text: promptText + nakshatraRashiData }] }];
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: schema
+                    }
+                };
+                
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                let retryCount = 0;
+                const maxRetries = 5;
+                const initialDelay = 1000;
+
+                while (retryCount < maxRetries) {
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            if (response.status === 429) {
+                                const delay = initialDelay * Math.pow(2, retryCount);
+                                console.warn(`API rate limit exceeded. Retrying for life stages in ${delay}ms...`);
+                                await new Promise(resolve => setTimeout(resolve, delay));
+                                retryCount++;
+                                continue;
+                            } else {
+                                throw new Error(`API returned status code: ${response.status}`);
+                            }
+                        }
+
+                        const result = await response.json();
+                        if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            const jsonText = result.candidates[0].content.parts[0].text;
+                            try {
+                                const parsedJson = JSON.parse(jsonText);
+                                return parsedJson;
+                            } catch (parseError) {
+                                console.error('Failed to parse JSON for life stages:', parseError);
+                                const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+                                if (jsonMatch) {
+                                    return JSON.parse(jsonMatch[0]);
+                                }
+                                throw new Error('Invalid JSON format received from API for life stages.');
+                            }
+                        } else {
+                            throw new Error('Unexpected API response structure or no content for life stages.');
+                        }
+                    } catch (error) {
+                        console.error('Fetch error for life stages:', error);
+                        throw error;
+                    }
+                }
+                throw new Error('Max API retries exceeded for life stages data.');
             }
             
             function displayUserInfo(userDetails, language) {
@@ -576,8 +750,7 @@
 
                 const headerSpan = document.getElementById(headerId);
                 if (headerSpan) {
-                     const translationKey = type.split('_').map((word, index) => index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)).join('') + 'Header';
-                     const titleKey = type.split('_').map((word, index) => index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)).join('') + 'Title';
+                     const titleKey = type.replace(/-/g, '').replace(/(\b\w)/g, s => s.toUpperCase()).replace(/^(.)/, (s) => s.toLowerCase()) + 'Title';
                      if (translations[language][titleKey]) {
                          headerSpan.textContent = translations[language][titleKey];
                      }
