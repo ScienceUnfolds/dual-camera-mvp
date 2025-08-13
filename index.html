@@ -41,8 +41,8 @@
 
     <div class="container mx-auto p-6 bg-white rounded-xl shadow-lg w-full max-w-4xl">
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Personalized Horoscope & Astrology</h1>
-            <p class="text-gray-600">Enter your details to get your unique astrological insights.</p>
+            <h1 id="main-title" class="text-4xl font-bold text-gray-800 mb-2">Personalized Horoscope & Astrology</h1>
+            <p id="main-subtitle" class="text-gray-600">Enter your details to get your unique astrological insights.</p>
         </div>
 
         <!-- Input Form -->
@@ -197,6 +197,51 @@
             const alertTitle = document.getElementById('alert-title');
             const alertMessage = document.getElementById('alert-message');
             const alertOkBtn = document.getElementById('alert-ok-btn');
+            const languageSelect = document.getElementById('language');
+
+            const translations = {
+                en: {
+                    mainTitle: 'Personalized Horoscope & Astrology',
+                    mainSubtitle: 'Enter your details to get your unique astrological insights.',
+                    submitBtn: 'Get My Horoscope',
+                    pleaseWait: 'Please wait...',
+                    errorTitle: 'Error',
+                    errorMessage: 'Please fill in all the details.',
+                    errorRetrieval: 'Could not retrieve astrological details. Please try again.',
+                    errorOccurred: 'An error occurred. Details:',
+                    astrologicalDetails: 'Astrological Details',
+                    dailyHoroscope: 'Daily Horoscope',
+                    weeklyHoroscope: 'Weekly Horoscope',
+                    monthlyHoroscope: 'Monthly Horoscope',
+                    yearlyHoroscope: 'Yearly Horoscope',
+                    lifeStages: 'Life Stages',
+                    relationships: 'Daily Relationship Insights',
+                },
+                ne: {
+                    mainTitle: 'व्यक्तिगत राशिफल र ज्योतिष',
+                    mainSubtitle: 'आफ्नो अद्वितीय ज्योतिषीय अन्तर्दृष्टि प्राप्त गर्न आफ्नो विवरणहरू भर्नुहोस्।',
+                    submitBtn: 'मेरो राशिफल प्राप्त गर्नुहोस्',
+                    pleaseWait: 'कृपया पर्खनुहोस्...',
+                    errorTitle: 'त्रुटि',
+                    errorMessage: 'कृपया सबै जानकारी भर्नुहोस्।',
+                    errorRetrieval: 'ज्योतिषीय विवरण प्राप्त गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।',
+                    errorOccurred: 'एक त्रुटि भयो। विवरण:',
+                    astrologicalDetails: 'ज्योतिषीय विवरण',
+                    dailyHoroscope: 'दैनिक राशिफल',
+                    weeklyHoroscope: 'साप्ताहिक राशिफल',
+                    monthlyHoroscope: 'मासिक राशिफल',
+                    yearlyHoroscope: 'वार्षिक राशिफल',
+                    lifeStages: 'जीवनका चरणहरू',
+                    relationships: 'दैनिक सम्बन्धको जानकारी',
+                }
+            };
+            
+            // Function to update the header and button text
+            function updateHeaderLanguage(lang) {
+                document.getElementById('main-title').textContent = translations[lang].mainTitle;
+                document.getElementById('main-subtitle').textContent = translations[lang].mainSubtitle;
+                document.getElementById('submit-btn').innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${translations[lang].submitBtn}`;
+            }
 
             // Load saved user details from local storage
             const savedDetails = localStorage.getItem('horoscopeUserDetails');
@@ -207,6 +252,7 @@
                 document.getElementById('birthplace').value = userDetails.birthplace || '';
                 document.getElementById('language').value = userDetails.language || 'en';
             }
+            updateHeaderLanguage(languageSelect.value);
 
             // Accordion functionality
             const accordionHeaders = document.querySelectorAll('.accordion-header');
@@ -233,6 +279,11 @@
                 alertModal.classList.remove('flex');
             });
 
+            // Update header and button text when language changes
+            languageSelect.addEventListener('change', (e) => {
+                updateHeaderLanguage(e.target.value);
+            });
+
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
@@ -242,9 +293,7 @@
                 const language = document.getElementById('language').value;
 
                 if (!name || !dob || !birthplace) {
-                    const title = language === 'ne' ? 'त्रुटि' : 'Error';
-                    const message = language === 'ne' ? 'कृपया सबै जानकारी भर्नुहोस्।' : 'Please fill in all the details.';
-                    showAlert(title, message);
+                    showAlert(translations[language].errorTitle, translations[language].errorMessage);
                     return;
                 }
 
@@ -254,7 +303,7 @@
                 loading.classList.remove('hidden');
                 resultsDiv.classList.add('hidden');
                 submitBtn.disabled = true;
-                submitBtn.textContent = (language === 'ne' ? 'कृपया पर्खनुहोस्...' : 'Please wait...');
+                submitBtn.textContent = translations[language].pleaseWait;
                 
                 // Reset previous results
                 const allHoroscopes = ['daily', 'weekly', 'monthly', 'yearly', 'life-stages', 'relationships'];
@@ -303,17 +352,15 @@
                             .catch(error => console.error('Relationships fetch failed:', error));
 
                     } else {
-                        showAlert('Error', language === 'ne' ? 'ज्योतिषीय विवरण प्राप्त गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।' : 'Could not retrieve astrological details. Please try again.');
+                        showAlert(translations[language].errorTitle, translations[language].errorRetrieval);
                     }
                 } catch (error) {
                     console.error('Error fetching data:', error);
-                    const title = language === 'ne' ? 'त्रुटि' : 'Error';
-                    const message = language === 'ne' ? `एक त्रुटि भयो। विवरण: ${error.message}` : `An error occurred. Details: ${error.message}`;
-                    showAlert(title, message);
+                    showAlert(translations[language].errorTitle, `${translations[language].errorOccurred} ${error.message}`);
                 } finally {
                     loading.classList.add('hidden');
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${language === 'ne' ? 'मेरो राशिफल प्राप्त गर्नुहोस्' : 'Get My Horoscope'}`;
+                    submitBtn.innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${translations[language].submitBtn}`;
                 }
             });
 
@@ -374,7 +421,7 @@
                     }
                 };
                 
-                const apiKey = "";
+                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                 let retryCount = 0;
@@ -428,35 +475,20 @@
             }
 
             function displayAstrologicalDetails(data, language) {
-                const labels = {
-                    en: { astrologicalDetails: 'Astrological Details' },
-                    ne: { astrologicalDetails: 'ज्योतिषीय विवरण' }
-                };
-                document.getElementById('astrological-details-card').querySelector('h2').textContent = labels[language].astrologicalDetails;
+                document.getElementById('astrological-details-card').querySelector('h2').textContent = translations[language].astrologicalDetails;
                 document.getElementById('astrological-details').innerHTML = `<p class="text-gray-600">${data.astrological_details}</p>`;
             }
 
             function displayHoroscope(type, content, language) {
-                const labels = {
-                    en: {
-                        'daily': 'Daily Horoscope', 'weekly': 'Weekly Horoscope', 'monthly': 'Monthly Horoscope',
-                        'yearly': 'Yearly Horoscope', 'life-stages': 'Life Stages', 'relationships': 'Daily Relationship Insights'
-                    },
-                    ne: {
-                        'daily': 'दैनिक राशिफल', 'weekly': 'साप्ताहिक राशिफल', 'monthly': 'मासिक राशिफल',
-                        'yearly': 'वार्षिक राशिफल', 'life-stages': 'जीवनका चरणहरू', 'relationships': 'दैनिक सम्बन्धको जानकारी'
-                    }
-                };
-
                 // Update the section header
                 if (type === 'relationships') {
                     const cardHeader = document.getElementById('relationships-card').querySelector('h2');
-                    cardHeader.textContent = labels[language][type];
+                    cardHeader.textContent = translations[language][type];
                     document.getElementById('relationships').innerHTML = `<p class="text-gray-600">${content}</p>`;
                 } else {
                     const headerButton = document.querySelector(`[data-target="${type}-horoscope-content"]`);
                     const headerSpan = headerButton.querySelector('span');
-                    headerSpan.textContent = labels[language][type];
+                    headerSpan.textContent = translations[language][type];
                     document.getElementById(`${type}-horoscope`).innerHTML = `<p class="text-gray-600">${content}</p>`;
                 }
             }
