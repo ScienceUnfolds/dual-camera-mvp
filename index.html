@@ -91,7 +91,7 @@
       educationTitle: 'Education',
       healthTitle: 'Health',
       jobTitle: 'Job',
-      financeTitle: 'Overall Finance Status',
+      financeTitle: 'Financial Status',
       socialLifeTitle: 'Social Life',
       familyHealthTitle: 'Family Health',
       spouseRelationshipsTitle: 'Relationship with Spouse',
@@ -131,7 +131,7 @@
       educationTitle: 'शिक्षा',
       healthTitle: 'स्वास्थ्य',
       jobTitle: 'रोजगारी',
-      financeTitle: 'समग्र वित्तीय स्थिति',
+      financeTitle: 'वित्तीय स्थिति',
       socialLifeTitle: 'सामाजिक जीवन',
       familyHealthTitle: 'पारिवारिक स्वास्थ्य',
       spouseRelationshipsTitle: 'जीवनसाथीसँगको सम्बन्ध',
@@ -171,7 +171,7 @@
       educationTitle: 'शिक्षा',
       healthTitle: 'स्वास्थ्य',
       jobTitle: 'नौकरी',
-      financeTitle: 'समग्र वित्तीय स्थिति',
+      financeTitle: 'वित्तीय स्थिति',
       socialLifeTitle: 'सामाजिक जीवन',
       familyHealthTitle: 'पारिवारिक स्वास्थ्य',
       spouseRelationshipsTitle: 'जीवनसाथी के साथ संबंध',
@@ -230,7 +230,10 @@
         - 'monthly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming month.
         - 'yearly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming year.
         - 'job_horoscope': A specific daily horoscope focusing on their job and career.
-        - 'finance_horoscope': A specific daily horoscope focusing on their overall finance status.
+        - 'finance_horoscope': A specific daily horoscope focusing on their overall financial status.
+        - 'education_horoscope': A specific daily horoscope focusing on education and learning.
+        - 'health_horoscope': A specific daily horoscope focusing on health.
+        - 'spouse_relationships_horoscope': A specific daily horoscope focusing on their relationship with their spouse.
     `;
 
     const schema = {
@@ -244,41 +247,13 @@
         "yearly_horoscope": { "type": "STRING" },
         "relationships": { "type": "STRING" },
         "job_horoscope": { "type": "STRING" },
-        "finance_horoscope": { "type": "STRING" }
+        "finance_horoscope": { "type": "STRING" },
+        "education_horoscope": { "type": "STRING" },
+        "health_horoscope": { "type": "STRING" },
+        "spouse_relationships_horoscope": { "type": "STRING" },
       },
-      required: ["astrological_details", "birthplace_description", "daily_horoscope", "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships", "job_horoscope", "finance_horoscope"]
+      required: ["astrological_details", "birthplace_description", "daily_horoscope", "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships", "job_horoscope", "finance_horoscope", "education_horoscope", "health_horoscope", "spouse_relationships_horoscope"]
     };
-
-    if (userAge < 20) {
-      promptText += `
-        - 'education_horoscope': A specific daily horoscope focusing on education.
-        - 'health_horoscope': A specific daily horoscope focusing on health.
-      `;
-      schema.properties.education_horoscope = { "type": "STRING" };
-      schema.properties.health_horoscope = { "type": "STRING" };
-      schema.required.push('education_horoscope', 'health_horoscope');
-    } else if (userAge >= 20) {
-      promptText += `
-        - 'education_horoscope': A specific daily horoscope focusing on education and learning.
-        - 'spouse_relationships_horoscope': A specific daily horoscope focusing on their relationship with their spouse.
-      `;
-      schema.properties.education_horoscope = { "type": "STRING" };
-      schema.properties.spouse_relationships_horoscope = { "type": "STRING" };
-      schema.required.push('education_horoscope', 'spouse_relationships_horoscope');
-    }
-    
-    // Additional horoscopes for older age group
-    if (userAge > 60) {
-      promptText += `
-        - 'health_horoscope': A specific daily horoscope focusing on their health.
-        - 'social_horoscope': A specific daily horoscope focusing on their social life.
-        - 'family_health_horoscope': A specific daily horoscope focusing on the health of their family.
-      `;
-      schema.properties.health_horoscope = { "type": "STRING" };
-      schema.properties.social_horoscope = { "type": "STRING" };
-      schema.properties.family_health_horoscope = { "type": "STRING" };
-      schema.required.push('health_horoscope', 'social_horoscope', 'family_health_horoscope');
-    }
 
     const chatHistory = [{ role: "user", parts: [{ text: promptText + nakshatraRashiData }] }];
     const payload = {
@@ -289,7 +264,7 @@
       }
     };
 
-    const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
+    const apiKey = "";
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
     let retryCount = 0;
@@ -446,8 +421,6 @@
           health_horoscope: fastData.health_horoscope,
           job_horoscope: fastData.job_horoscope,
           finance_horoscope: fastData.finance_horoscope,
-          social_horoscope: fastData.social_horoscope,
-          family_health_horoscope: fastData.family_health_horoscope,
           spouse_relationships_horoscope: fastData.spouse_relationships_horoscope,
         }));
         setResultsVisible(true);
@@ -481,65 +454,55 @@
     };
 
     const renderDailyHoroscopeSubsections = () => {
-      if (userAge === null) return null;
-
-      if (userAge < 20) {
-        return (
-          <>
-            <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('education-horoscope-content', false)}>
-                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-graduation-cap mr-3 text-cyan-500"></i><span>{translations[language].educationTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['education-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
-              </button>
-              <div id="education-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['education-horoscope-content'] ? 'active' : ''}`}>
-                <p className="text-gray-600">{horoscopes.education_horoscope || translations[language].loading}</p>
-              </div>
+      return (
+        <>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('job-horoscope-content', false)}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-briefcase mr-3 text-emerald-500"></i><span>{translations[language].jobTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['job-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="job-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['job-horoscope-content'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.job_horoscope || translations[language].loading}</p>
             </div>
-            <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('health-horoscope-content', false)}>
-                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heartbeat mr-3 text-red-500"></i><span>{translations[language].healthTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['health-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
-              </button>
-              <div id="health-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['health-horoscope-content'] ? 'active' : ''}`}>
-                <p className="text-gray-600">{horoscopes.health_horoscope || translations[language].loading}</p>
-              </div>
+          </div>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('finance-horoscope-content', false)}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-sack-dollar mr-3 text-amber-500"></i><span>{translations[language].financeTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['finance-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="finance-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['finance-horoscope-content'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.finance_horoscope || translations[language].loading}</p>
             </div>
-          </>
-        );
-      } else if (userAge >= 20) {
-        return (
-          <>
-            <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('job-horoscope-content', false)}>
-                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-briefcase mr-3 text-emerald-500"></i><span>{translations[language].jobTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['job-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
-              </button>
-              <div id="job-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['job-horoscope-content'] ? 'active' : ''}`}>
-                <p className="text-gray-600">{horoscopes.job_horoscope || translations[language].loading}</p>
-              </div>
+          </div>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('education-horoscope-content', false)}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-graduation-cap mr-3 text-cyan-500"></i><span>{translations[language].educationTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['education-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="education-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['education-horoscope-content'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.education_horoscope || translations[language].loading}</p>
             </div>
-            <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('finance-horoscope-content', false)}>
-                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-sack-dollar mr-3 text-amber-500"></i><span>{translations[language].financeTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['finance-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
-              </button>
-              <div id="finance-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['finance-horoscope-content'] ? 'active' : ''}`}>
-                <p className="text-gray-600">{horoscopes.finance_horoscope || translations[language].loading}</p>
-              </div>
+          </div>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('health-horoscope-content', false)}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heartbeat mr-3 text-red-500"></i><span>{translations[language].healthTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['health-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="health-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['health-horoscope-content'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.health_horoscope || translations[language].loading}</p>
             </div>
-            <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('spouse-relationships-content', false)}>
-                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-hand-holding-heart mr-3 text-pink-500"></i><span>{translations[language].spouseRelationshipsTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['spouse-relationships-content'] ? 'rotated-icon' : ''}`}></i>
-              </button>
-              <div id="spouse-relationships-content" className={`accordion-content p-4 bg-white ${accordionState['spouse-relationships-content'] ? 'active' : ''}`}>
-                <p className="text-gray-600">{horoscopes.spouse_relationships_horoscope || translations[language].loading}</p>
-              </div>
+          </div>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('spouse-relationships-content', false)}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-hand-holding-heart mr-3 text-pink-500"></i><span>{translations[language].spouseRelationshipsTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['spouse-relationships-content'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="spouse-relationships-content" className={`accordion-content p-4 bg-white ${accordionState['spouse-relationships-content'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.spouse_relationships_horoscope || translations[language].loading}</p>
             </div>
-          </>
-        );
-      }
-      return null;
+          </div>
+        </>
+      );
     };
 
     return (
