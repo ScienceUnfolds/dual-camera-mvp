@@ -318,8 +318,23 @@
             });
 
             async function getAstrologicalData({ name, dob, birthplace, language, type }) {
+                const nakshatraRashiData = `
+                    Rashi: Mesha, Nakshatras: Aswini (Awasthi), Bharani, Krithika (Karthikai), Initial letters: Chu, Che, Cho, La, Li, Lu, Le, Lo, A, Ee, U, E
+                    Rashi: Vrishabha, Nakshatras: Rohini, Mrigashiras (Magave), Initial letters: O, BA, BI, Bu, Be, Bo, Vo, Ka, Ki, Ku
+                    Rashi: Mithuna, Nakshatras: Audra (Thiruvadhi), Punarvasu (Punartham), Initial letters: Gha, Ng, Chha, Ke, Ko, Ha, Hi, Hu
+                    Rashi: Karkata, Nakshatras: Pushyami (Pooyaram), Ashlesha (Ayilyam), Initial letters: Hu, He, Ho, Da, Dee, Doo, De, Do
+                    Rashi: Simha, Nakshatras: Makha (Magha), Poorva Phalguni (Pooram), Uttara Phalguni (Uttaram), Initial letters: Ma, Me, Mo, Ta, Ti, Tu, Te, To, Pa, Pe, Po
+                    Rashi: Kanya, Nakshatras: Hastha (Atham), Chitra (Chithira), Initial letters: Pu, Poo, Sha, Pe, Po, Ra
+                    Rashi: Tula, Nakshatras: Swati (Chothy), Visakha (Visakam), Initial letters: Ru, Re, Ro, Ta, Te, Tu, Te
+                    Rashi: Vrishchika, Nakshatras: Anuradha (Anizham), Jyeshta (Triketta), Initial letters: Na, Nee, Nu, Ne, No, Ya, Ye, Yu
+                    Rashi: Dhanus, Nakshatras: Moola (Moolam), Purva Ashadha (Pooradam), Uttarashada, Initial letters: Yo, Ye, Bhe, Bho, Ga, Bhu, Dha, Pha, Bha
+                    Rashi: Makara, Nakshatras: Sravana (Thiruvonam), Dhanishta (Avittam), Initial letters: Khe, Khob, Ga, Gi, Gu, Ge, Go, Ga, Gi
+                    Rashi: Kumbha, Nakshatras: Sathabisham (Chathayam), Purvabhadra (Poorvabhadra), Initial letters: Go, Sa, Si, Su, Se, So, Da, Di, Du
+                    Rashi: Meena, Nakshatras: Uttarabhadra (Uthrittathi), Revati (Revati), Initial letters: Di, Du, Tha, Jha, Na, De, Do, Cha, Chi
+                `;
+
                 let promptText = '';
-                const basePrompt = `Generate a detailed and elaborate astrological reading in ${language === 'ne' ? 'Nepali' : 'English'} for a person with the following information. Do not include any text outside of the JSON object.
+                const basePrompt = `Generate a detailed and elaborate astrological reading in ${language === 'ne' ? 'Nepali' : 'English'} for a person with the following information. Use the provided Nakshatra and Rashi data to determine the person's astrological sign based on their date of birth, and generate the horoscope accordingly. You can include the Rashi name in the final output. The provided data is: ${nakshatraRashiData}. Do not include any text outside of the JSON object.
                 Name: ${name}.
                 Date of Birth: ${dob}.
                 Birth Place: ${birthplace}.`;
@@ -359,7 +374,7 @@
                     }
                 };
                 
-                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
+                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                 let retryCount = 0;
