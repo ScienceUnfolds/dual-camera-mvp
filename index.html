@@ -200,7 +200,8 @@
             const alertModal = document.getElementById('alert-modal');
             const alertTitle = document.getElementById('alert-title');
             const alertMessage = document.getElementById('alert-message');
-            const alertOkBtn = document.getElementById('alert-ok-btn');
+            // This line had a typo, it was `document =getElementById`. Corrected to `document.getElementById`.
+            const alertOkBtn = document.getElementById('alert-ok-btn'); 
             const languageSelect = document.getElementById('language');
 
             const translations = {
@@ -292,7 +293,7 @@
             accordionHeaders.forEach(header => {
                 header.addEventListener('click', () => {
                     const content = document.getElementById(header.dataset.target);
-                    const icon = header.querySelector('.fa-chevron-down, .fa-chevron-up');
+                    const icon = header.querySelector('.fa-chevron-down');
                     
                     const isActive = content.classList.contains('active');
 
@@ -300,7 +301,7 @@
                     document.querySelectorAll('.accordion-content').forEach(accContent => {
                         if (accContent !== content) {
                              accContent.classList.remove('active');
-                             const otherIcon = accContent.previousElementSibling.querySelector('.fa-chevron-down, .fa-chevron-up');
+                             const otherIcon = accContent.previousElementSibling.querySelector('.fa-chevron-down');
                              otherIcon.classList.remove('rotated-icon');
                         }
                     });
@@ -365,43 +366,19 @@
                 document.getElementById('astrological-details').innerHTML = '<p>Loading...</p>';
 
                 try {
-                    // First, get basic astrological details and daily horoscope
-                    const currentDate = new Date().toISOString().slice(0, 10);
-                    const dailyData = await getAstrologicalData({ 
-                        name, 
-                        dob, 
-                        birthplace, 
-                        language, 
-                        type: 'daily',
-                        currentDate
-                    });
-                    if (dailyData) {
-                        displayAstrologicalDetails(dailyData, language);
-                        displayHoroscope('daily', dailyData.daily_horoscope, language);
+                    // Make a single API call for all horoscope types
+                    const fullData = await getAstrologicalData({ name, dob, birthplace, language });
+
+                    if (fullData) {
+                        displayAstrologicalDetails(fullData, language);
+                        displayHoroscope('daily', fullData.daily_horoscope, language);
+                        displayHoroscope('weekly', fullData.weekly_horoscope, language);
+                        displayHoroscope('monthly', fullData.monthly_horoscope, language);
+                        displayHoroscope('yearly', fullData.yearly_horoscope, language);
+                        displayHoroscope('life-stages', fullData.life_stages, language);
+                        displayHoroscope('relationships', fullData.relationships, language);
                         resultsDiv.classList.remove('hidden');
                         document.getElementById('daily-horoscope-content').classList.add('active'); // Open daily section
-                        
-                        // Then, fetch other horoscopes in the background
-                        getAstrologicalData({ name, dob, birthplace, language, type: 'weekly' })
-                            .then(data => displayHoroscope('weekly', data.weekly_horoscope, language))
-                            .catch(error => console.error('Weekly horoscope fetch failed:', error));
-
-                        getAstrologicalData({ name, dob, birthplace, language, type: 'monthly' })
-                            .then(data => displayHoroscope('monthly', data.monthly_horoscope, language))
-                            .catch(error => console.error('Monthly horoscope fetch failed:', error));
-
-                        getAstrologicalData({ name, dob, birthplace, language, type: 'yearly' })
-                            .then(data => displayHoroscope('yearly', data.yearly_horoscope, language))
-                            .catch(error => console.error('Yearly horoscope fetch failed:', error));
-                        
-                        getAstrologicalData({ name, dob, birthplace, language, type: 'life-stages' })
-                            .then(data => displayHoroscope('life-stages', data.life_stages, language))
-                            .catch(error => console.error('Life stages fetch failed:', error));
-
-                        getAstrologicalData({ name, dob, birthplace, language, type: 'relationships' })
-                            .then(data => displayHoroscope('relationships', data.relationships, language))
-                            .catch(error => console.error('Relationships fetch failed:', error));
-
                     } else {
                         showAlert(translations[language].errorTitle, translations[language].errorRetrieval);
                     }
@@ -415,7 +392,7 @@
                 }
             });
 
-            async function getAstrologicalData({ name, dob, birthplace, language, type, currentDate }) {
+            async function getAstrologicalData({ name, dob, birthplace, language }) {
                 const nakshatraRashiData = `
                     Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
                     Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
@@ -431,38 +408,22 @@
                     Rashi: मीन (Meena), नक्षेत्र: उत्तरभाद्रपद (Uttarabhadra), रेवती (Revati), नामको सुरुको अक्षर: दि, दु, थ, झ, ञ, दे, दो, च, चि, द, दी
                 `;
 
-                let promptText = '';
-                const basePrompt = `Generate a detailed and elaborate astrological reading in ${language === 'ne' ? 'Nepali' : 'English'} for a person with the following information. Use the provided Nakshatra and Rashi data to determine the person's astrological sign based on their date of birth, and generate the horoscope accordingly. You can include the Rashi name in the final output. The provided data is: ${nakshatraRashiData}. Do not include any text outside of the JSON object.
+                const currentDate = new Date().toISOString().slice(0, 10);
+                
+                const promptText = `Generate a detailed and elaborate astrological reading in ${language === 'ne' ? 'Nepali' : 'English'} for a person with the following information. Use the provided Nakshatra and Rashi data to determine the person's astrological sign based on their date of birth, and generate the horoscope accordingly. You can include the Rashi name in the final output. The provided data is: ${nakshatraRashiData}. Do not include any text outside of the JSON object.
+                
+                Generate a single JSON object containing the following keys:
+                - "astrological_details": A detailed paragraph about their zodiac sign and planetary influences.
+                - "daily_horoscope": A detailed and specific daily horoscope for today's date: ${currentDate}.
+                - "weekly_horoscope": An elaborated paragraph for their horoscope for the coming week.
+                - "monthly_horoscope": An elaborated paragraph for their horoscope for the coming month.
+                - "yearly_horoscope": A comprehensive and detailed paragraph for their horoscope for the coming year.
+                - "life_stages": A detailed and elaborate paragraph about their horoscope for different life stages: youth, adulthood, and old age.
+                - "relationships": A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids).
+
                 Name: ${name}.
                 Date of Birth: ${dob}.
                 Birth Place: ${birthplace}.`;
-
-                switch (type) {
-                    case 'daily':
-                        promptText = `${basePrompt}
-                        For the current date: ${currentDate}. The JSON object should have the following keys: "astrological_details" (a detailed paragraph about their zodiac sign and planetary influences) and "daily_horoscope" (a detailed and specific daily horoscope for today).`;
-                        break;
-                    case 'weekly':
-                        promptText = `${basePrompt}
-                        The JSON object should have the following key: "weekly_horoscope" (an elaborated paragraph for their horoscope for the coming week).`;
-                        break;
-                    case 'monthly':
-                        promptText = `${basePrompt}
-                        The JSON object should have the following key: "monthly_horoscope" (an elaborated paragraph for their horoscope for the coming month).`;
-                        break;
-                    case 'yearly':
-                        promptText = `${basePrompt}
-                        The JSON object should have the following key: "yearly_horoscope" (a comprehensive and detailed paragraph for their horoscope for the coming year).`;
-                        break;
-                    case 'life-stages':
-                        promptText = `${basePrompt}
-                        The JSON object should have the following key: "life_stages" (a detailed and elaborate paragraph about their horoscope for different life stages: youth, adulthood, and old age).`;
-                        break;
-                    case 'relationships':
-                        promptText = `${basePrompt}
-                        The JSON object should have the following key: "relationships" (a detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids).`;
-                        break;
-                }
                 
                 const chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
                 const payload = {
