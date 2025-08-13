@@ -57,6 +57,7 @@
                 <select id="language" name="language" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm">
                     <option value="en">English</option>
                     <option value="ne">Nepali</option>
+                    <option value="hi">Hindi</option>
                 </select>
             </div>
 
@@ -93,6 +94,12 @@
         
         <!-- Results Section with Accordion -->
         <div id="results" class="hidden mt-8 space-y-4">
+            
+            <!-- User Information Section -->
+            <div id="user-info-card" class="bg-gray-50 p-6 rounded-lg shadow-sm">
+                <h2 id="user-info-header" class="text-2xl font-semibold text-gray-800 mb-4">User Details</h2>
+                <div id="user-info"></div>
+            </div>
 
             <!-- Astrological Details Section -->
             <div id="astrological-details-card" class="bg-gray-50 p-6 rounded-lg shadow-sm">
@@ -197,10 +204,10 @@
             const submitBtn = document.getElementById('submit-btn');
             const loading = document.getElementById('loading');
             const resultsDiv = document.getElementById('results');
+            const userInfoDiv = document.getElementById('user-info');
             const alertModal = document.getElementById('alert-modal');
             const alertTitle = document.getElementById('alert-title');
             const alertMessage = document.getElementById('alert-message');
-            // This line had a typo, it was `document =getElementById`. Corrected to `document.getElementById`.
             const alertOkBtn = document.getElementById('alert-ok-btn'); 
             const languageSelect = document.getElementById('language');
 
@@ -228,6 +235,9 @@
                     yearlyHoroscopeTitle: 'Yearly Horoscope',
                     lifeStagesTitle: 'Life Stages',
                     relationshipsHeader: 'Daily Relationship Insights',
+                    userInfoHeader: 'User Details',
+                    dateOfBirth: 'Date of Birth',
+                    birthPlace: 'Birth Place',
                 },
                 ne: {
                     mainTitle: 'व्यक्तिगत राशिफल र ज्योतिष',
@@ -252,6 +262,36 @@
                     yearlyHoroscopeTitle: 'वार्षिक राशिफल',
                     lifeStagesTitle: 'जीवनका चरणहरू',
                     relationshipsHeader: 'दैनिक सम्बन्धको जानकारी',
+                    userInfoHeader: 'प्रयोगकर्ता विवरण',
+                    dateOfBirth: 'जन्म मिति',
+                    birthPlace: 'जन्म स्थान',
+                },
+                hi: {
+                    mainTitle: 'व्यक्तिगत राशिफल और ज्योतिष',
+                    mainSubtitle: 'अपनी अद्वितीय ज्योतिषीय अंतर्दृष्टि प्राप्त करने के लिए अपना विवरण दर्ज करें।',
+                    labelLanguage: 'भाषा चुनें',
+                    labelName: 'पूरा नाम',
+                    placeholderName: 'उदाहरण: जॉन डो',
+                    labelDob: 'जन्म तिथि',
+                    labelBirthplace: 'जन्म स्थान',
+                    placeholderBirthplace: 'उदाहरण: काठमांडू, नेपाल',
+                    submitBtn: 'मेरा राशिफल प्राप्त करें',
+                    pleaseWait: 'कृपया प्रतीक्षा करें...',
+                    errorTitle: 'त्रुटि',
+                    errorMessage: 'कृपया सभी विवरण भरें।',
+                    errorRetrieval: 'ज्योतिषीय विवरण प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।',
+                    errorOccurred: 'एक त्रुटि हुई। विवरण:',
+                    astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
+                    horoscopeHeader: 'राशिफल',
+                    dailyHoroscopeTitle: 'दैनिक राशिफल',
+                    weeklyHoroscopeTitle: 'साप्ताहिक राशिफल',
+                    monthlyHoroscopeTitle: 'मासिक राशिफल',
+                    yearlyHoroscopeTitle: 'वार्षिक राशिफल',
+                    lifeStagesTitle: 'जीवन के चरण',
+                    relationshipsHeader: 'दैनिक संबंध अंतर्दृष्टि',
+                    userInfoHeader: 'उपयोगकर्ता विवरण',
+                    dateOfBirth: 'जन्म तिथि',
+                    birthPlace: 'जन्म स्थान',
                 }
             };
 
@@ -275,6 +315,7 @@
                 document.getElementById('yearly-horoscope-title').textContent = translations[lang].yearlyHoroscopeTitle;
                 document.getElementById('life-stages-title').textContent = translations[lang].lifeStagesTitle;
                 document.getElementById('relationships-header').textContent = translations[lang].relationshipsHeader;
+                document.getElementById('user-info-header').textContent = translations[lang].userInfoHeader;
             }
 
             // Load saved user details from local storage
@@ -356,32 +397,39 @@
                 submitBtn.innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${translations[language].pleaseWait}`;
                 
                 // Reset previous results
-                const allHoroscopes = ['daily', 'weekly', 'monthly', 'yearly', 'life-stages', 'relationships'];
+                const allHoroscopes = ['daily', 'weekly', 'monthly', 'yearly', 'life-stages', 'relationships', 'astrological-details'];
                 allHoroscopes.forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
                         el.innerHTML = '<p>Loading...</p>';
                     }
                 });
-                document.getElementById('astrological-details').innerHTML = '<p>Loading...</p>';
+
+                // Display user info immediately
+                displayUserInfo(userDetails, language);
 
                 try {
-                    // Make a single API call for all horoscope types
-                    const fullData = await getAstrologicalData({ name, dob, birthplace, language });
+                    // Use Promise.all to make multiple API calls concurrently
+                    const [astroDetails, dailyHoro, weeklyHoro, monthlyHoro, yearlyHoro, lifeStages, relationships] = await Promise.all([
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'astrological_details' }),
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'daily_horoscope' }),
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'weekly_horoscope' }),
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'monthly_horoscope' }),
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'yearly_horoscope' }),
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'life_stages' }),
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'relationships' }),
+                    ]);
 
-                    if (fullData) {
-                        displayAstrologicalDetails(fullData, language);
-                        displayHoroscope('daily', fullData.daily_horoscope, language);
-                        displayHoroscope('weekly', fullData.weekly_horoscope, language);
-                        displayHoroscope('monthly', fullData.monthly_horoscope, language);
-                        displayHoroscope('yearly', fullData.yearly_horoscope, language);
-                        displayHoroscope('life-stages', fullData.life_stages, language);
-                        displayHoroscope('relationships', fullData.relationships, language);
-                        resultsDiv.classList.remove('hidden');
-                        document.getElementById('daily-horoscope-content').classList.add('active'); // Open daily section
-                    } else {
-                        showAlert(translations[language].errorTitle, translations[language].errorRetrieval);
-                    }
+                    displayAstrologicalDetails(astroDetails, language);
+                    displayHoroscope('daily', dailyHoro, language);
+                    displayHoroscope('weekly', weeklyHoro, language);
+                    displayHoroscope('monthly', monthlyHoro, language);
+                    displayHoroscope('yearly', yearlyHoro, language);
+                    displayHoroscope('life-stages', lifeStages, language);
+                    displayHoroscope('relationships', relationships, language);
+                    
+                    resultsDiv.classList.remove('hidden');
+                    document.getElementById('daily-horoscope-content').classList.add('active'); // Open daily section
                 } catch (error) {
                     console.error('Error fetching data:', error);
                     showAlert(translations[language].errorTitle, `${translations[language].errorOccurred} ${error.message}`);
@@ -392,7 +440,7 @@
                 }
             });
 
-            async function getAstrologicalData({ name, dob, birthplace, language }) {
+            async function getAstrologicalData({ name, dob, birthplace, language, type }) {
                 const nakshatraRashiData = `
                     Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
                     Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
@@ -407,33 +455,92 @@
                     Rashi: कुम्भ (Kumbha), नक्षेत्र: शतभिषा (Sathabisham), पूर्वभाद्रपद (Purvabhadra), नामको सुरुको अक्षर: गो, सा, सी, सु, से, सो, दा, दी, दु, दे, दो, चा, ची
                     Rashi: मीन (Meena), नक्षेत्र: उत्तरभाद्रपद (Uttarabhadra), रेवती (Revati), नामको सुरुको अक्षर: दि, दु, थ, झ, ञ, दे, दो, च, चि, द, दी
                 `;
-
                 const currentDate = new Date().toISOString().slice(0, 10);
                 
-                const promptText = `Generate a detailed and elaborate astrological reading in ${language === 'ne' ? 'Nepali' : 'English'} for a person with the following information. Use the provided Nakshatra and Rashi data to determine the person's astrological sign based on their date of birth, and generate the horoscope accordingly. You can include the Rashi name in the final output. The provided data is: ${nakshatraRashiData}. Do not include any text outside of the JSON object.
-                
-                Generate a single JSON object containing the following keys:
-                - "astrological_details": A detailed paragraph about their zodiac sign and planetary influences.
-                - "daily_horoscope": A detailed and specific daily horoscope for today's date: ${currentDate}.
-                - "weekly_horoscope": An elaborated paragraph for their horoscope for the coming week.
-                - "monthly_horoscope": An elaborated paragraph for their horoscope for the coming month.
-                - "yearly_horoscope": A comprehensive and detailed paragraph for their horoscope for the coming year.
-                - "life_stages": A detailed and elaborate paragraph about their horoscope for different life stages: youth, adulthood, and old age.
-                - "relationships": A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids).
+                let promptText = '';
+                let schema = {};
 
-                Name: ${name}.
-                Date of Birth: ${dob}.
-                Birth Place: ${birthplace}.`;
+                // Use different prompts and schemas for each type to optimize the model's response
+                switch(type) {
+                    case 'astrological_details':
+                        promptText = `Generate a detailed and elaborate astrological reading in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} for a person with the following information. Use the provided Nakshatra and Rashi data to determine the person's astrological sign based on their date of birth, and generate the horoscope accordingly. You can include the Rashi name in the final output. The provided data is: ${nakshatraRashiData}. Also, provide a short paragraph about the provided birthplace.
+                            Name: ${name}.
+                            Date of Birth: ${dob}.
+                            Birth Place: ${birthplace}.`;
+                        schema = {
+                            type: "OBJECT",
+                            properties: {
+                                "astrological_details": { "type": "STRING" },
+                                "birthplace_description": { "type": "STRING" }
+                            }
+                        };
+                        break;
+                    case 'daily_horoscope':
+                        promptText = `Generate a detailed and specific daily horoscope for today's date: ${currentDate} in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} for a person with a date of birth of ${dob}. The person's birthplace is ${birthplace}.`;
+                        schema = {
+                            type: "OBJECT",
+                            properties: {
+                                "daily_horoscope": { "type": "STRING" }
+                            }
+                        };
+                        break;
+                    case 'weekly_horoscope':
+                        promptText = `Generate an elaborated paragraph for their horoscope for the coming week in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} for a person with a date of birth of ${dob}. The person's birthplace is ${birthplace}.`;
+                        schema = {
+                            type: "OBJECT",
+                            properties: {
+                                "weekly_horoscope": { "type": "STRING" }
+                            }
+                        };
+                        break;
+                    case 'monthly_horoscope':
+                        promptText = `Generate an elaborated paragraph for their horoscope for the coming month in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} for a person with a date of birth of ${dob}. The person's birthplace is ${birthplace}.`;
+                        schema = {
+                            type: "OBJECT",
+                            properties: {
+                                "monthly_horoscope": { "type": "STRING" }
+                            }
+                        };
+                        break;
+                    case 'yearly_horoscope':
+                        promptText = `Generate a comprehensive and detailed paragraph for their horoscope for the coming year in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} for a person with a date of birth of ${dob}. The person's birthplace is ${birthplace}.`;
+                        schema = {
+                            type: "OBJECT",
+                            properties: {
+                                "yearly_horoscope": { "type": "STRING" }
+                            }
+                        };
+                        break;
+                    case 'life_stages':
+                        promptText = `Generate a detailed and elaborate paragraph about their horoscope for different life stages: youth, adulthood, and old age in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} for a person with a date of birth of ${dob}. The person's birthplace is ${birthplace}.`;
+                        schema = {
+                            type: "OBJECT",
+                            properties: {
+                                "life_stages": { "type": "STRING" }
+                            }
+                        };
+                        break;
+                    case 'relationships':
+                        promptText = `Generate a detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} for a person with a date of birth of ${dob}. The person's birthplace is ${birthplace}.`;
+                        schema = {
+                            type: "OBJECT",
+                            properties: {
+                                "relationships": { "type": "STRING" }
+                            }
+                        };
+                        break;
+                }
                 
                 const chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
                 const payload = {
                     contents: chatHistory,
                     generationConfig: {
-                        responseMimeType: "application/json"
+                        responseMimeType: "application/json",
+                        responseSchema: schema
                     }
                 };
                 
-                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
+                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                 let retryCount = 0;
@@ -466,7 +573,8 @@
                             result.candidates[0].content.parts.length > 0) {
                             const jsonText = result.candidates[0].content.parts[0].text;
                             try {
-                                return JSON.parse(jsonText);
+                                const parsedJson = JSON.parse(jsonText);
+                                return parsedJson;
                             } catch (parseError) {
                                 console.error('Failed to parse JSON:', parseError);
                                 const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
@@ -485,20 +593,38 @@
                 }
                 throw new Error('Max API retries exceeded.');
             }
-
-            function displayAstrologicalDetails(data, language) {
-                document.getElementById('astrological-details').innerHTML = `<p class="text-gray-600">${data.astrological_details}</p>`;
+            
+            function displayUserInfo(userDetails, language) {
+                const { dob, birthplace } = userDetails;
+                userInfoDiv.innerHTML = `
+                    <div class="mb-2">
+                        <p class="text-sm font-medium text-gray-700">${translations[language].dateOfBirth}:</p>
+                        <p class="text-gray-600">${dob}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">${translations[language].birthPlace}:</p>
+                        <p class="text-gray-600">${birthplace}</p>
+                    </div>
+                `;
             }
 
-            function displayHoroscope(type, content, language) {
+            function displayAstrologicalDetails(data, language) {
+                const { astrological_details, birthplace_description } = data;
+                document.getElementById('astrological-details').innerHTML = `
+                    <p class="text-gray-600 mb-4">${astrological_details}</p>
+                    ${birthplace_description ? `<p class="text-gray-600">${birthplace_description}</p>` : ''}
+                `;
+            }
+
+            function displayHoroscope(type, data, language) {
                 const headerSpan = document.getElementById(`${type}-horoscope-title`);
                 headerSpan.textContent = translations[language][`${type}HoroscopeTitle`];
 
                 if (type === 'relationships') {
                     document.getElementById('relationships-header').textContent = translations[language].relationshipsHeader;
-                    document.getElementById('relationships').innerHTML = `<p class="text-gray-600">${content}</p>`;
+                    document.getElementById('relationships').innerHTML = `<p class="text-gray-600">${data.relationships}</p>`;
                 } else {
-                    document.getElementById(`${type}-horoscope`).innerHTML = `<p class="text-gray-600">${content}</p>`;
+                    document.getElementById(`${type}-horoscope`).innerHTML = `<p class="text-gray-600">${data[`${type}_horoscope`]}</p>`;
                 }
             }
         });
