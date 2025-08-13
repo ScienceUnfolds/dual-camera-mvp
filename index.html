@@ -26,6 +26,15 @@
                 transform: rotate(360deg);
             }
         }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-content.active {
+            max-height: 1000px; /* A large number to allow for content expansion */
+            transition: max-height 0.5s ease-in;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -78,38 +87,86 @@
             <div class="loading-spinner"></div>
         </div>
         
-        <!-- Results Section -->
-        <div id="results" class="hidden mt-8 space-y-6">
-            <!-- Personalized details and horoscopes will be inserted here by JavaScript -->
+        <!-- Results Section with Accordion -->
+        <div id="results" class="hidden mt-8 space-y-4">
+
+            <!-- Astrological Details Section -->
             <div id="astrological-details-card" class="bg-gray-50 p-6 rounded-lg shadow-sm">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-4">Astrological Details</h2>
                 <div id="astrological-details"></div>
             </div>
 
-            <div id="horoscope-card" class="bg-gray-50 p-6 rounded-lg shadow-sm">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Horoscopes</h2>
-                <div id="daily-horoscope-section">
-                    <h3 class="text-lg font-medium text-gray-700 mb-2">Daily Horoscope</h3>
-                    <div id="daily-horoscope"></div>
+            <!-- Horoscope Accordion -->
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 p-4">Horoscopes</h2>
+                
+                <!-- Daily Horoscope Accordion Item -->
+                <div class="border-t border-gray-200">
+                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="daily-horoscope-content">
+                        <span class="text-lg font-medium text-gray-700">Daily Horoscope</span>
+                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
+                    </button>
+                    <div id="daily-horoscope-content" class="accordion-content p-4 bg-white">
+                        <div id="daily-horoscope" class="text-gray-600">
+                            <p>Loading...</p>
+                        </div>
+                    </div>
                 </div>
-                <div id="weekly-horoscope-section" class="mt-4">
-                    <h3 class="text-lg font-medium text-gray-700 mb-2">Weekly Horoscope</h3>
-                    <div id="weekly-horoscope"></div>
+
+                <!-- Weekly Horoscope Accordion Item -->
+                <div class="border-t border-gray-200">
+                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="weekly-horoscope-content">
+                        <span class="text-lg font-medium text-gray-700">Weekly Horoscope</span>
+                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
+                    </button>
+                    <div id="weekly-horoscope-content" class="accordion-content p-4 bg-white">
+                        <div id="weekly-horoscope" class="text-gray-600">
+                            <p>Loading...</p>
+                        </div>
+                    </div>
                 </div>
-                <div id="monthly-horoscope-section" class="mt-4">
-                    <h3 class="text-lg font-medium text-gray-700 mb-2">Monthly Horoscope</h3>
-                    <div id="monthly-horoscope"></div>
+
+                <!-- Monthly Horoscope Accordion Item -->
+                <div class="border-t border-gray-200">
+                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="monthly-horoscope-content">
+                        <span class="text-lg font-medium text-gray-700">Monthly Horoscope</span>
+                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
+                    </button>
+                    <div id="monthly-horoscope-content" class="accordion-content p-4 bg-white">
+                        <div id="monthly-horoscope" class="text-gray-600">
+                            <p>Loading...</p>
+                        </div>
+                    </div>
                 </div>
-                <div id="yearly-horoscope-section" class="mt-4">
-                    <h3 class="text-lg font-medium text-gray-700 mb-2">Yearly Horoscope</h3>
-                    <div id="yearly-horoscope"></div>
+
+                <!-- Yearly Horoscope Accordion Item -->
+                <div class="border-t border-gray-200">
+                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="yearly-horoscope-content">
+                        <span class="text-lg font-medium text-gray-700">Yearly Horoscope</span>
+                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
+                    </button>
+                    <div id="yearly-horoscope-content" class="accordion-content p-4 bg-white">
+                        <div id="yearly-horoscope" class="text-gray-600">
+                            <p>Loading...</p>
+                        </div>
+                    </div>
                 </div>
-                <div id="life-stages-section" class="mt-4">
-                    <h3 class="text-lg font-medium text-gray-700 mb-2">Life Stages</h3>
-                    <div id="life-stages"></div>
+
+                <!-- Life Stages Accordion Item -->
+                <div class="border-t border-gray-200">
+                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="life-stages-content">
+                        <span class="text-lg font-medium text-gray-700">Life Stages</span>
+                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
+                    </button>
+                    <div id="life-stages-content" class="accordion-content p-4 bg-white">
+                        <div id="life-stages" class="text-gray-600">
+                            <p>Loading...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Relationships Section -->
             <div id="relationships-card" class="bg-gray-50 p-6 rounded-lg shadow-sm">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-4">Daily Relationship Insights</h2>
                 <div id="relationships"></div>
@@ -151,6 +208,18 @@
                 document.getElementById('language').value = userDetails.language || 'en';
             }
 
+            // Accordion functionality
+            const accordionHeaders = document.querySelectorAll('.accordion-header');
+            accordionHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = document.getElementById(header.dataset.target);
+                    const icon = header.querySelector('i');
+                    content.classList.toggle('active');
+                    icon.classList.toggle('fa-chevron-down');
+                    icon.classList.toggle('fa-chevron-up');
+                });
+            });
+
             // Set up a custom alert function to replace the browser's alert()
             function showAlert(title, message) {
                 alertTitle.textContent = title;
@@ -172,7 +241,6 @@
                 const birthplace = document.getElementById('birthplace').value;
                 const language = document.getElementById('language').value;
 
-                // Validate form inputs
                 if (!name || !dob || !birthplace) {
                     const title = language === 'ne' ? 'त्रुटि' : 'Error';
                     const message = language === 'ne' ? 'कृपया सबै जानकारी भर्नुहोस्।' : 'Please fill in all the details.';
@@ -180,21 +248,60 @@
                     return;
                 }
 
-                // Save user details to local storage
                 const userDetails = { name, dob, birthplace, language };
                 localStorage.setItem('horoscopeUserDetails', JSON.stringify(userDetails));
 
-                // Show loading indicator and hide results
                 loading.classList.remove('hidden');
                 resultsDiv.classList.add('hidden');
                 submitBtn.disabled = true;
                 submitBtn.textContent = (language === 'ne' ? 'कृपया पर्खनुहोस्...' : 'Please wait...');
+                
+                // Reset previous results
+                const allHoroscopes = ['daily', 'weekly', 'monthly', 'yearly', 'life-stages', 'relationships'];
+                allHoroscopes.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.innerHTML = '<p>Loading...</p>';
+                    }
+                });
+                document.getElementById('astrological-details').innerHTML = '<p>Loading...</p>';
 
                 try {
-                    const data = await getAstrologicalData({ name, dob, birthplace, language });
-                    if (data) {
-                        displayResults(data, language);
+                    // First, get basic astrological details and daily horoscope
+                    const dailyData = await getAstrologicalData({ 
+                        name, 
+                        dob, 
+                        birthplace, 
+                        language, 
+                        type: 'daily' 
+                    });
+                    if (dailyData) {
+                        displayAstrologicalDetails(dailyData, language);
+                        displayHoroscope('daily', dailyData.daily_horoscope, language);
                         resultsDiv.classList.remove('hidden');
+                        document.getElementById('daily-horoscope-content').classList.add('active'); // Open daily section
+                        
+                        // Then, fetch other horoscopes in the background
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'weekly' })
+                            .then(data => displayHoroscope('weekly', data.weekly_horoscope, language))
+                            .catch(error => console.error('Weekly horoscope fetch failed:', error));
+
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'monthly' })
+                            .then(data => displayHoroscope('monthly', data.monthly_horoscope, language))
+                            .catch(error => console.error('Monthly horoscope fetch failed:', error));
+
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'yearly' })
+                            .then(data => displayHoroscope('yearly', data.yearly_horoscope, language))
+                            .catch(error => console.error('Yearly horoscope fetch failed:', error));
+                        
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'life-stages' })
+                            .then(data => displayHoroscope('life-stages', data.life_stages, language))
+                            .catch(error => console.error('Life stages fetch failed:', error));
+
+                        getAstrologicalData({ name, dob, birthplace, language, type: 'relationships' })
+                            .then(data => displayHoroscope('relationships', data.relationships, language))
+                            .catch(error => console.error('Relationships fetch failed:', error));
+
                     } else {
                         showAlert('Error', language === 'ne' ? 'ज्योतिषीय विवरण प्राप्त गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।' : 'Could not retrieve astrological details. Please try again.');
                     }
@@ -204,30 +311,46 @@
                     const message = language === 'ne' ? `एक त्रुटि भयो। विवरण: ${error.message}` : `An error occurred. Details: ${error.message}`;
                     showAlert(title, message);
                 } finally {
-                    // Hide loading indicator and re-enable button
                     loading.classList.add('hidden');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${language === 'ne' ? 'मेरो राशिफल प्राप्त गर्नुहोस्' : 'Get My Horoscope'}`;
                 }
             });
 
-            async function getAstrologicalData({ name, dob, birthplace, language }) {
-                const promptText = `Generate detailed astrological details and horoscopes for a person with the following information. The response must be a single JSON object. Do not include any text outside the JSON object.
-                Language: ${language === 'ne' ? 'Nepali' : 'English'}.
+            async function getAstrologicalData({ name, dob, birthplace, language, type }) {
+                let promptText = '';
+                const basePrompt = `Generate a detailed and elaborate astrological reading in ${language === 'ne' ? 'Nepali' : 'English'} for a person with the following information. Do not include any text outside of the JSON object.
                 Name: ${name}.
                 Date of Birth: ${dob}.
-                Birth Place: ${birthplace}.
-                
-                The JSON object should have the following keys and values (please ensure all values are strings):
-                - "astrological_details": A detailed paragraph about their zodiac sign and planetary influences.
-                - "daily_horoscope": A short paragraph for their daily horoscope.
-                - "weekly_horoscope": A short paragraph for their weekly horoscope.
-                - "monthly_horoscope": A short paragraph for their monthly horoscope.
-                - "yearly_horoscope": A detailed paragraph for their yearly horoscope.
-                - "life_stages": A detailed paragraph about horoscopes for different life stages (e.g., youth, adulthood, old age).
-                - "relationships": A paragraph about their daily relationships with family (dad, mom, siblings) and spouse/kids.
-                `;
+                Birth Place: ${birthplace}.`;
 
+                switch (type) {
+                    case 'daily':
+                        promptText = `${basePrompt}
+                        The JSON object should have the following keys: "astrological_details" (a detailed paragraph about their zodiac sign and planetary influences) and "daily_horoscope" (a detailed and specific daily horoscope for today).`;
+                        break;
+                    case 'weekly':
+                        promptText = `${basePrompt}
+                        The JSON object should have the following key: "weekly_horoscope" (an elaborated paragraph for their horoscope for the coming week).`;
+                        break;
+                    case 'monthly':
+                        promptText = `${basePrompt}
+                        The JSON object should have the following key: "monthly_horoscope" (an elaborated paragraph for their horoscope for the coming month).`;
+                        break;
+                    case 'yearly':
+                        promptText = `${basePrompt}
+                        The JSON object should have the following key: "yearly_horoscope" (a comprehensive and detailed paragraph for their horoscope for the coming year).`;
+                        break;
+                    case 'life-stages':
+                        promptText = `${basePrompt}
+                        The JSON object should have the following key: "life_stages" (a detailed and elaborate paragraph about their horoscope for different life stages: youth, adulthood, and old age).`;
+                        break;
+                    case 'relationships':
+                        promptText = `${basePrompt}
+                        The JSON object should have the following key: "relationships" (a detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids).`;
+                        break;
+                }
+                
                 const chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
                 const payload = {
                     contents: chatHistory,
@@ -235,13 +358,13 @@
                         responseMimeType: "application/json"
                     }
                 };
-
+                
                 const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                 let retryCount = 0;
                 const maxRetries = 5;
-                const initialDelay = 1000; // 1 second
+                const initialDelay = 1000;
 
                 while (retryCount < maxRetries) {
                     try {
@@ -252,7 +375,7 @@
                         });
 
                         if (!response.ok) {
-                            if (response.status === 429) { // Too Many Requests
+                            if (response.status === 429) {
                                 const delay = initialDelay * Math.pow(2, retryCount);
                                 console.warn(`API rate limit exceeded. Retrying in ${delay}ms...`);
                                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -289,44 +412,38 @@
                 throw new Error('Max API retries exceeded.');
             }
 
-            function displayResults(data, language) {
+            function displayAstrologicalDetails(data, language) {
+                const labels = {
+                    en: { astrologicalDetails: 'Astrological Details' },
+                    ne: { astrologicalDetails: 'ज्योतिषीय विवरण' }
+                };
+                document.getElementById('astrological-details-card').querySelector('h2').textContent = labels[language].astrologicalDetails;
+                document.getElementById('astrological-details').innerHTML = `<p class="text-gray-600">${data.astrological_details}</p>`;
+            }
+
+            function displayHoroscope(type, content, language) {
                 const labels = {
                     en: {
-                        astrologicalDetails: 'Astrological Details',
-                        dailyHoroscope: 'Daily Horoscope',
-                        weeklyHoroscope: 'Weekly Horoscope',
-                        monthlyHoroscope: 'Monthly Horoscope',
-                        yearlyHoroscope: 'Yearly Horoscope',
-                        lifeStages: 'Life Stages',
-                        relationships: 'Daily Relationship Insights'
+                        'daily': 'Daily Horoscope', 'weekly': 'Weekly Horoscope', 'monthly': 'Monthly Horoscope',
+                        'yearly': 'Yearly Horoscope', 'life-stages': 'Life Stages', 'relationships': 'Daily Relationship Insights'
                     },
                     ne: {
-                        astrologicalDetails: 'ज्योतिषीय विवरण',
-                        dailyHoroscope: 'दैनिक राशिफल',
-                        weeklyHoroscope: 'साप्ताहिक राशिफल',
-                        monthlyHoroscope: 'मासिक राशिफल',
-                        yearlyHoroscope: 'वार्षिक राशिफल',
-                        lifeStages: 'जीवनका चरणहरू',
-                        relationships: 'दैनिक सम्बन्धको जानकारी'
+                        'daily': 'दैनिक राशिफल', 'weekly': 'साप्ताहिक राशिफल', 'monthly': 'मासिक राशिफल',
+                        'yearly': 'वार्षिक राशिफल', 'life-stages': 'जीवनका चरणहरू', 'relationships': 'दैनिक सम्बन्धको जानकारी'
                     }
                 };
 
-                document.getElementById('astrological-details-card').querySelector('h2').textContent = labels[language].astrologicalDetails;
-                document.getElementById('horoscope-card').querySelector('h2').textContent = labels[language].weeklyHoroscope;
-                document.getElementById('daily-horoscope-section').querySelector('h3').textContent = labels[language].dailyHoroscope;
-                document.getElementById('weekly-horoscope-section').querySelector('h3').textContent = labels[language].weeklyHoroscope;
-                document.getElementById('monthly-horoscope-section').querySelector('h3').textContent = labels[language].monthlyHoroscope;
-                document.getElementById('yearly-horoscope-section').querySelector('h3').textContent = labels[language].yearlyHoroscope;
-                document.getElementById('life-stages-section').querySelector('h3').textContent = labels[language].lifeStages;
-                document.getElementById('relationships-card').querySelector('h2').textContent = labels[language].relationships;
-
-                document.getElementById('astrological-details').innerHTML = `<p class="text-gray-600">${data.astrological_details}</p>`;
-                document.getElementById('daily-horoscope').innerHTML = `<p class="text-gray-600">${data.daily_horoscope}</p>`;
-                document.getElementById('weekly-horoscope').innerHTML = `<p class="text-gray-600">${data.weekly_horoscope}</p>`;
-                document.getElementById('monthly-horoscope').innerHTML = `<p class="text-gray-600">${data.monthly_horoscope}</p>`;
-                document.getElementById('yearly-horoscope').innerHTML = `<p class="text-gray-600">${data.yearly_horoscope}</p>`;
-                document.getElementById('life-stages').innerHTML = `<p class="text-gray-600">${data.life_stages}</p>`;
-                document.getElementById('relationships').innerHTML = `<p class="text-gray-600">${data.relationships}</p>`;
+                // Update the section header
+                if (type === 'relationships') {
+                    const cardHeader = document.getElementById('relationships-card').querySelector('h2');
+                    cardHeader.textContent = labels[language][type];
+                    document.getElementById('relationships').innerHTML = `<p class="text-gray-600">${content}</p>`;
+                } else {
+                    const headerButton = document.querySelector(`[data-target="${type}-horoscope-content"]`);
+                    const headerSpan = headerButton.querySelector('span');
+                    headerSpan.textContent = labels[language][type];
+                    document.getElementById(`${type}-horoscope`).innerHTML = `<p class="text-gray-600">${content}</p>`;
+                }
             }
         });
     </script>
