@@ -60,8 +60,9 @@
       mainTitle: 'Personalized Horoscope & Astrology',
       mainSubtitle: 'Enter your details to get your unique astrological insights.',
       labelLanguage: 'Select Language',
-      labelName: 'Full Name',
-      placeholderName: 'e.g., John Doe',
+      labelName: 'Name Given by Pandit',
+      placeholderName: 'e.g., Ram, Sita',
+      warningName: 'Please provide the name given by the pandit for a more accurate reading.',
       labelDob: 'Date of Birth',
       placeholderDobAd: 'YYYY-MM-DD',
       placeholderDobBs: 'YYYY-MM-DD BS',
@@ -93,13 +94,15 @@
       financeTitle: 'Overall Finance Status',
       socialLifeTitle: 'Social Life',
       familyHealthTitle: 'Family Health',
+      spouseRelationshipsTitle: 'Relationship with Spouse',
     },
     ne: {
       mainTitle: 'व्यक्तिगत राशिफल र ज्योतिष',
       mainSubtitle: 'आफ्नो अद्वितीय ज्योतिषीय अन्तर्दृष्टि प्राप्त गर्न आफ्नो विवरणहरू भर्नुहोस्।',
       labelLanguage: 'भाषा चयन गर्नुहोस्',
-      labelName: 'पूरा नाम',
-      placeholderName: 'उदाहरण: जोन डो',
+      labelName: 'पण्डितले दिएको नाम',
+      placeholderName: 'उदाहरण: राम, सीता',
+      warningName: 'अझ सही राशिफलको लागि, कृपया पण्डितले दिएको नाम प्रदान गर्नुहोस्।',
       labelDob: 'जन्म मिति',
       placeholderDobAd: 'YYYY-MM-DD',
       placeholderDobBs: 'YYYY-MM-DD BS',
@@ -131,13 +134,15 @@
       financeTitle: 'समग्र वित्तीय स्थिति',
       socialLifeTitle: 'सामाजिक जीवन',
       familyHealthTitle: 'पारिवारिक स्वास्थ्य',
+      spouseRelationshipsTitle: 'जीवनसाथीसँगको सम्बन्ध',
     },
     hi: {
       mainTitle: 'व्यक्तिगत राशिफल और ज्योतिष',
       mainSubtitle: 'अपनी अद्वितीय ज्योतिषीय अंतर्दृष्टि प्राप्त करने के लिए अपना विवरण दर्ज करें।',
       labelLanguage: 'भाषा चुनें',
-      labelName: 'पूरा नाम',
-      placeholderName: 'उदाहरण: जॉन डो',
+      labelName: 'पंडित द्वारा दिया गया नाम',
+      placeholderName: 'उदाहरण: राम, सीता',
+      warningName: 'अधिक सटीक राशिफल के लिए, कृपया पंडित द्वारा दिया गया नाम प्रदान करें।',
       labelDob: 'जन्म तिथि',
       placeholderDobAd: 'YYYY-MM-DD',
       placeholderDobBs: 'YYYY-MM-DD BS',
@@ -169,6 +174,7 @@
       financeTitle: 'समग्र वित्तीय स्थिति',
       socialLifeTitle: 'सामाजिक जीवन',
       familyHealthTitle: 'पारिवारिक स्वास्थ्य',
+      spouseRelationshipsTitle: 'जीवनसाथी के साथ संबंध',
     }
   };
 
@@ -211,15 +217,20 @@
 
     let promptText = `
         Generate a comprehensive JSON object in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} with the following data points for a person with the name: ${name}, ${dateInfo}, and birthplace: ${birthplace}. 
-        Use the provided Rashi and Nakshatra data to inform the astrological readings.
+        The name given by the pandit is: ${name}.
+    `;
+
+    promptText += `Use the provided Rashi and Nakshatra data to inform the astrological readings.
         The JSON object should have the following string properties:
         - 'astrological_details': A detailed and elaborate astrological reading including the person's Rashi.
         - 'birthplace_description': A short paragraph about the provided birthplace.
         - 'daily_horoscope': A detailed and specific daily horoscope for today's date: ${currentDate}.
         - 'relationships': A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids.
         - 'weekly_horoscope': An elaborated paragraph for their horoscope for the coming week.
-        - 'monthly_horoscope': An elaborated paragraph for their horoscope for the coming month.
+        - 'monthly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming month.
         - 'yearly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming year.
+        - 'job_horoscope': A specific daily horoscope focusing on their job and career.
+        - 'finance_horoscope': A specific daily horoscope focusing on their overall finance status.
     `;
 
     const schema = {
@@ -231,9 +242,11 @@
         "weekly_horoscope": { "type": "STRING" },
         "monthly_horoscope": { "type": "STRING" },
         "yearly_horoscope": { "type": "STRING" },
-        "relationships": { "type": "STRING" }
+        "relationships": { "type": "STRING" },
+        "job_horoscope": { "type": "STRING" },
+        "finance_horoscope": { "type": "STRING" }
       },
-      required: ["astrological_details", "birthplace_description", "daily_horoscope", "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships"]
+      required: ["astrological_details", "birthplace_description", "daily_horoscope", "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships", "job_horoscope", "finance_horoscope"]
     };
 
     if (userAge < 20) {
@@ -244,17 +257,18 @@
       schema.properties.education_horoscope = { "type": "STRING" };
       schema.properties.health_horoscope = { "type": "STRING" };
       schema.required.push('education_horoscope', 'health_horoscope');
-    } else if (userAge >= 20 && userAge <= 60) {
+    } else if (userAge >= 20) {
       promptText += `
         - 'education_horoscope': A specific daily horoscope focusing on education and learning.
-        - 'job_horoscope': A specific daily horoscope focusing on their job and career.
-        - 'finance_horoscope': A specific daily horoscope focusing on their overall finance status.
+        - 'spouse_relationships_horoscope': A specific daily horoscope focusing on their relationship with their spouse.
       `;
       schema.properties.education_horoscope = { "type": "STRING" };
-      schema.properties.job_horoscope = { "type": "STRING" };
-      schema.properties.finance_horoscope = { "type": "STRING" };
-      schema.required.push('education_horoscope', 'job_horoscope', 'finance_horoscope');
-    } else if (userAge > 60) {
+      schema.properties.spouse_relationships_horoscope = { "type": "STRING" };
+      schema.required.push('education_horoscope', 'spouse_relationships_horoscope');
+    }
+    
+    // Additional horoscopes for older age group
+    if (userAge > 60) {
       promptText += `
         - 'health_horoscope': A specific daily horoscope focusing on their health.
         - 'social_horoscope': A specific daily horoscope focusing on their social life.
@@ -265,7 +279,6 @@
       schema.properties.family_health_horoscope = { "type": "STRING" };
       schema.required.push('health_horoscope', 'social_horoscope', 'family_health_horoscope');
     }
-
 
     const chatHistory = [{ role: "user", parts: [{ text: promptText + nakshatraRashiData }] }];
     const payload = {
@@ -352,6 +365,7 @@
       finance_horoscope: null,
       social_horoscope: null,
       family_health_horoscope: null,
+      spouse_relationships_horoscope: null,
     });
     const [userAge, setUserAge] = useState(null);
     const [accordionState, setAccordionState] = useState({});
@@ -404,9 +418,9 @@
         finance_horoscope: null,
         social_horoscope: null,
         family_health_horoscope: null,
+        spouse_relationships_horoscope: null,
       });
 
-      // Pass dob as is. The prompt will specify the date format.
       const age = calculateAge(dob);
       setUserAge(age);
 
@@ -434,6 +448,7 @@
           finance_horoscope: fastData.finance_horoscope,
           social_horoscope: fastData.social_horoscope,
           family_health_horoscope: fastData.family_health_horoscope,
+          spouse_relationships_horoscope: fastData.spouse_relationships_horoscope,
         }));
         setResultsVisible(true);
         setAccordionState({ 'daily-horoscope-content': true });
@@ -451,14 +466,12 @@
     const toggleAccordion = (targetId, isTopLevel) => {
       setAccordionState(prev => {
         if (isTopLevel) {
-          // Logic for top-level accordions (mutually exclusive)
           const newState = {};
           const isCurrentlyOpen = prev[targetId];
           Object.keys(prev).forEach(key => newState[key] = false);
           newState[targetId] = !isCurrentlyOpen;
           return newState;
         } else {
-          // Logic for nested accordions (independent toggle)
           return {
             ...prev,
             [targetId]: !prev[targetId]
@@ -493,18 +506,9 @@
             </div>
           </>
         );
-      } else if (userAge >= 20 && userAge <= 60) {
+      } else if (userAge >= 20) {
         return (
           <>
-            <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('education-horoscope-content', false)}>
-                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-graduation-cap mr-3 text-cyan-500"></i><span>{translations[language].educationTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['education-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
-              </button>
-              <div id="education-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['education-horoscope-content'] ? 'active' : ''}`}>
-                <p className="text-gray-600">{horoscopes.education_horoscope || translations[language].loading}</p>
-              </div>
-            </div>
             <div className="border-t border-gray-200">
               <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('job-horoscope-content', false)}>
                 <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-briefcase mr-3 text-emerald-500"></i><span>{translations[language].jobTitle}</span></span>
@@ -523,36 +527,13 @@
                 <p className="text-gray-600">{horoscopes.finance_horoscope || translations[language].loading}</p>
               </div>
             </div>
-          </>
-        );
-      } else if (userAge > 60) {
-        return (
-          <>
             <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('health-horoscope-content', false)}>
-                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heartbeat mr-3 text-red-500"></i><span>{translations[language].healthTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['health-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
+              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('spouse-relationships-content', false)}>
+                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-hand-holding-heart mr-3 text-pink-500"></i><span>{translations[language].spouseRelationshipsTitle}</span></span>
+                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['spouse-relationships-content'] ? 'rotated-icon' : ''}`}></i>
               </button>
-              <div id="health-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['health-horoscope-content'] ? 'active' : ''}`}>
-                <p className="text-gray-600">{horoscopes.health_horoscope || translations[language].loading}</p>
-              </div>
-            </div>
-            <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('social-horoscope-content', false)}>
-                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-users mr-3 text-indigo-500"></i><span>{translations[language].socialLifeTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['social-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
-              </button>
-              <div id="social-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['social-horoscope-content'] ? 'active' : ''}`}>
-                <p className="text-gray-600">{horoscopes.social_horoscope || translations[language].loading}</p>
-              </div>
-            </div>
-            <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('family-health-horoscope-content', false)}>
-                <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-hand-holding-heart mr-3 text-pink-500"></i><span>{translations[language].familyHealthTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['family-health-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
-              </button>
-              <div id="family-health-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['family-health-horoscope-content'] ? 'active' : ''}`}>
-                <p className="text-gray-600">{horoscopes.family_health_horoscope || translations[language].loading}</p>
+              <div id="spouse-relationships-content" className={`accordion-content p-4 bg-white ${accordionState['spouse-relationships-content'] ? 'active' : ''}`}>
+                <p className="text-gray-600">{horoscopes.spouse_relationships_horoscope || translations[language].loading}</p>
               </div>
             </div>
           </>
@@ -581,6 +562,7 @@
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">{translations[language].labelName}</label>
               <input type="text" id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder={translations[language].placeholderName} />
+              <p className="mt-1 text-sm text-yellow-600 font-medium">{translations[language].warningName}</p>
             </div>
             <div>
               <div className="flex items-center space-x-2 mb-1">
