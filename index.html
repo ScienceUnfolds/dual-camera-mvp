@@ -417,18 +417,18 @@
 
             async function getAstrologicalData({ name, dob, birthplace, language, type, currentDate }) {
                 const nakshatraRashiData = `
-                    Rashi: Mesha, Nakshatras: Aswini (Awasthi), Bharani, Krithika (Karthikai), Initial letters: Chu, Che, Cho, La, Li, Lu, Le, Lo, A, Ee, U, E
-                    Rashi: Vrishabha, Nakshatras: Rohini, Mrigashiras (Magave), Initial letters: O, BA, BI, Bu, Be, Bo, Vo, Ka, Ki, Ku
-                    Rashi: Mithuna, Nakshatras: Audra (Thiruvadhi), Punarvasu (Punartham), Initial letters: Gha, Ng, Chha, Ke, Ko, Ha, Hi, Hu
-                    Rashi: Karkata, Nakshatras: Pushyami (Pooyaram), Ashlesha (Ayilyam), Initial letters: Hu, He, Ho, Da, Dee, Doo, De, Do
-                    Rashi: Simha, Nakshatras: Makha (Magha), Poorva Phalguni (Pooram), Uttara Phalguni (Uttaram), Initial letters: Ma, Me, Mo, Ta, Ti, Tu, Te, To, Pa, Pe, Po
-                    Rashi: Kanya, Nakshatras: Hastha (Atham), Chitra (Chithira), Initial letters: Pu, Poo, Sha, Pe, Po, Ra
-                    Rashi: Tula, Nakshatras: Swati (Chothy), Visakha (Visakam), Initial letters: Ru, Re, Ro, Ta, Te, Tu, Te
-                    Rashi: Vrishchika, Nakshatras: Anuradha (Anizham), Jyeshta (Triketta), Initial letters: Na, Nee, Nu, Ne, No, Ya, Ye, Yu
-                    Rashi: Dhanus, Nakshatras: Moola (Moolam), Purva Ashadha (Pooradam), Uttarashada, Initial letters: Yo, Ye, Bhe, Bho, Ga, Bhu, Dha, Pha, Bha
-                    Rashi: Makara, Nakshatras: Sravana (Thiruvonam), Dhanishta (Avittam), Initial letters: Khe, Khob, Ga, Gi, Gu, Ge, Go, Ga, Gi
-                    Rashi: Kumbha, Nakshatras: Sathabisham (Chathayam), Purvabhadra (Poorvabhadra), Initial letters: Go, Sa, Si, Su, Se, So, Da, Di, Du
-                    Rashi: Meena, Nakshatras: Uttarabhadra (Uthrittathi), Revati (Revati), Initial letters: Di, Du, Tha, Jha, Na, De, Do, Cha, Chi
+                    Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
+                    Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
+                    Rashi: मिथुन (Mithuna), नक्षेत्र: आद्रा (Audra), पुनर्वसु (Punarvasu), नामको सुरुको अक्षर: का, कि, कु, के, को, हा, हि, हु, हे, हो, दा, दी, दु, दे, दो
+                    Rashi: कर्कट (Karkata), नक्षेत्र: पुष्य (Pushya), आश्लेषा (Ashlesha), नामको सुरुको अक्षर: हु, हे, हो, डा, डि, डु, डे, डो
+                    Rashi: सिंह (Simha), नक्षेत्र: माघ (Magha), पूर्वाफाल्गुनी (Poorva Phalguni), उत्तराफाल्गुनी (Uttara Phalguni), नामको सुरुको अक्षर: मा, मी, मु, मे, मो, टा, टी, टु, टे, टो
+                    Rashi: कन्या (Kanya), नक्षेत्र: हस्त (Hastha), चित्रा (Chitra), नामको सुरुको अक्षर: पा, पी, पू, ष, ण, ठ, पे, पो, रा, री, रु, रे, रो, ता, ती, तु, ते, तो
+                    Rashi: तुला (Tula), नक्षेत्र: स्वाती (Swati), विशाखा (Visakha), नामको सुरुको अक्षर: रा, री, रु, रे, रो, ता, ती, तु, ते, तो
+                    Rashi: वृश्चिक (Vrishchika), नक्षेत्र: अनुराधा (Anuradha), ज्येष्ठा (Jyeshta), नामको सुरुको अक्षर: तो, ना, नी, नु, ने, नो, या, यी, यु, ये, यो
+                    Rashi: धनु (Dhanus), नक्षेत्र: मूल (Moola), पूर्वाषाढा (Purva Ashadha), उत्तराषाढा (Uttarashada), नामको सुरुको अक्षर: ये, यो, भ, ध, फा, ढा, भे, भो, गा, गी
+                    Rashi: मकर (Makara), नक्षेत्र: श्रवण (Sravana), धनिष्ठा (Dhanishta), नामको सुरुको अक्षर: भो, जा, जी, जु, जे, जो, खा, खी, खु, खे, खो, ग, गी
+                    Rashi: कुम्भ (Kumbha), नक्षेत्र: शतभिषा (Sathabisham), पूर्वभाद्रपद (Purvabhadra), नामको सुरुको अक्षर: गो, सा, सी, सु, से, सो, दा, दी, दु, दे, दो, चा, ची
+                    Rashi: मीन (Meena), नक्षेत्र: उत्तरभाद्रपद (Uttarabhadra), रेवती (Revati), नामको सुरुको अक्षर: दि, दु, थ, झ, ञ, दे, दो, च, चि, द, दी
                 `;
 
                 let promptText = '';
