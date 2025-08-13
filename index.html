@@ -75,6 +75,7 @@
       errorRetrieval: 'Could not retrieve astrological details. Please try again.',
       errorOccurred: 'An error occurred. Details:',
       astrologicalDetailsHeader: 'Astrological Details',
+      planetaryInfluencesTitle: 'Current Planetary Influences',
       horoscopeHeader: 'Horoscopes',
       dailyHoroscopeTitle: 'Daily Horoscope',
       relationshipsTitle: 'Daily Relationship Insights',
@@ -115,6 +116,7 @@
       errorRetrieval: 'ज्योतिषीय विवरण प्राप्त गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।',
       errorOccurred: 'एक त्रुटि भयो। विवरण:',
       astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
+      planetaryInfluencesTitle: 'हालको ग्रहहरूको प्रभाव',
       horoscopeHeader: 'राशिफल',
       dailyHoroscopeTitle: 'दैनिक राशिफल',
       relationshipsTitle: 'दैनिक सम्बन्धको जानकारी',
@@ -155,6 +157,7 @@
       errorRetrieval: 'ज्योतिषीय विवरण प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।',
       errorOccurred: 'एक त्रुटि हुई। विवरण:',
       astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
+      planetaryInfluencesTitle: 'वर्तमान ग्रहों का प्रभाव',
       horoscopeHeader: 'राशिफल',
       dailyHoroscopeTitle: 'दैनिक राशिफल',
       relationshipsTitle: 'दैनिक संबंध अंतर्दृष्टि',
@@ -194,7 +197,6 @@
   };
 
   const getFastLoadingData = async ({ name, dob, dateFormat, birthplace, language, userAge }) => {
-    // This data is used by the prompt to provide a more accurate reading.
     const nakshatraRashiData = `
         Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
         Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
@@ -225,6 +227,7 @@
         The JSON object should have the following string properties:
         - 'astrological_details': A detailed and elaborate astrological reading including the person's Rashi.
         - 'birthplace_description': A short paragraph about the provided birthplace.
+        - 'planetary_influences': A detailed and believable paragraph about the current planetary positions and their specific astrological influences on the person's life, including how specific planets like Jupiter, Saturn, Mars, etc., are affecting their daily life.
         - 'daily_horoscope': A detailed and specific daily horoscope for today's date: ${currentDate}. This must also include a specific reading based on the person's Nakshatra, seamlessly integrated into the main paragraph.
         - 'relationships': A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids.
         - 'weekly_horoscope': An elaborated paragraph for their horoscope for the coming week.
@@ -242,6 +245,7 @@
       properties: {
         "astrological_details": { "type": "STRING" },
         "birthplace_description": { "type": "STRING" },
+        "planetary_influences": { "type": "STRING" },
         "daily_horoscope": { "type": "STRING" },
         "weekly_horoscope": { "type": "STRING" },
         "monthly_horoscope": { "type": "STRING" },
@@ -253,7 +257,7 @@
         "health_horoscope": { "type": "STRING" },
         "spouse_relationships_horoscope": { "type": "STRING" },
       },
-      required: ["astrological_details", "birthplace_description", "daily_horoscope", "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships", "job_horoscope", "finance_horoscope", "education_horoscope", "health_horoscope", "spouse_relationships_horoscope"]
+      required: ["astrological_details", "birthplace_description", "planetary_influences", "daily_horoscope", "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships", "job_horoscope", "finance_horoscope", "education_horoscope", "health_horoscope", "spouse_relationships_horoscope"]
     };
 
     const chatHistory = [{ role: "user", parts: [{ text: promptText + nakshatraRashiData }] }];
@@ -409,7 +413,8 @@
         const fastData = await getFastLoadingData(userDetails);
         setAstrologicalDetails({
           details: fastData.astrological_details,
-          birthplace_description: fastData.birthplace_description
+          birthplace_description: fastData.birthplace_description,
+          planetary_influences: fastData.planetary_influences,
         });
         setHoroscopes(prev => ({
           ...prev,
@@ -576,6 +581,19 @@
                 <div>
                   <p className="text-gray-600 mb-4">{astrologicalDetails.details}</p>
                   {astrologicalDetails.birthplace_description && <p className="text-gray-600">{astrologicalDetails.birthplace_description}</p>}
+                </div>
+              </div>
+
+              {/* New section for Planetary Influences */}
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div className="border-t border-gray-200">
+                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('planetary-influences-content', true)}>
+                    <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-satellite mr-3 text-indigo-500"></i><span>{translations[language].planetaryInfluencesTitle}</span></span>
+                    <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['planetary-influences-content'] ? 'rotated-icon' : ''}`}></i>
+                  </button>
+                  <div id="planetary-influences-content" className={`accordion-content p-4 bg-white ${accordionState['planetary-influences-content'] ? 'active' : ''}`}>
+                    <p className="text-gray-600">{astrologicalDetails.planetary_influences || translations[language].loading}</p>
+                  </div>
                 </div>
               </div>
 
