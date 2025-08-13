@@ -448,13 +448,22 @@
       }
     };
 
-    const toggleAccordion = (target) => {
+    const toggleAccordion = (targetId, isTopLevel) => {
       setAccordionState(prev => {
-        const isCurrentlyOpen = prev[target];
-        const newState = {};
-        Object.keys(prev).forEach(key => newState[key] = false);
-        newState[target] = !isCurrentlyOpen;
-        return newState;
+        if (isTopLevel) {
+          // Logic for top-level accordions (mutually exclusive)
+          const newState = {};
+          const isCurrentlyOpen = prev[targetId];
+          Object.keys(prev).forEach(key => newState[key] = false);
+          newState[targetId] = !isCurrentlyOpen;
+          return newState;
+        } else {
+          // Logic for nested accordions (independent toggle)
+          return {
+            ...prev,
+            [targetId]: !prev[targetId]
+          };
+        }
       });
     };
 
@@ -465,20 +474,20 @@
         return (
           <>
             <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-education')}>
+              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('education-horoscope-content', false)}>
                 <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-graduation-cap mr-3 text-cyan-500"></i><span>{translations[language].educationTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-education'] ? 'rotated-icon' : ''}`}></i>
+                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['education-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
               </button>
-              <div id="daily-horoscope-education" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-education'] ? 'active' : ''}`}>
+              <div id="education-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['education-horoscope-content'] ? 'active' : ''}`}>
                 <p className="text-gray-600">{horoscopes.education_horoscope || translations[language].loading}</p>
               </div>
             </div>
             <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-health')}>
+              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('health-horoscope-content', false)}>
                 <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heartbeat mr-3 text-red-500"></i><span>{translations[language].healthTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-health'] ? 'rotated-icon' : ''}`}></i>
+                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['health-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
               </button>
-              <div id="daily-horoscope-health" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-health'] ? 'active' : ''}`}>
+              <div id="health-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['health-horoscope-content'] ? 'active' : ''}`}>
                 <p className="text-gray-600">{horoscopes.health_horoscope || translations[language].loading}</p>
               </div>
             </div>
@@ -488,29 +497,29 @@
         return (
           <>
             <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-education')}>
+              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('education-horoscope-content', false)}>
                 <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-graduation-cap mr-3 text-cyan-500"></i><span>{translations[language].educationTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-education'] ? 'rotated-icon' : ''}`}></i>
+                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['education-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
               </button>
-              <div id="daily-horoscope-education" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-education'] ? 'active' : ''}`}>
+              <div id="education-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['education-horoscope-content'] ? 'active' : ''}`}>
                 <p className="text-gray-600">{horoscopes.education_horoscope || translations[language].loading}</p>
               </div>
             </div>
             <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-job')}>
+              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('job-horoscope-content', false)}>
                 <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-briefcase mr-3 text-emerald-500"></i><span>{translations[language].jobTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-job'] ? 'rotated-icon' : ''}`}></i>
+                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['job-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
               </button>
-              <div id="daily-horoscope-job" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-job'] ? 'active' : ''}`}>
+              <div id="job-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['job-horoscope-content'] ? 'active' : ''}`}>
                 <p className="text-gray-600">{horoscopes.job_horoscope || translations[language].loading}</p>
               </div>
             </div>
             <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-finance')}>
+              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('finance-horoscope-content', false)}>
                 <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-sack-dollar mr-3 text-amber-500"></i><span>{translations[language].financeTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-finance'] ? 'rotated-icon' : ''}`}></i>
+                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['finance-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
               </button>
-              <div id="daily-horoscope-finance" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-finance'] ? 'active' : ''}`}>
+              <div id="finance-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['finance-horoscope-content'] ? 'active' : ''}`}>
                 <p className="text-gray-600">{horoscopes.finance_horoscope || translations[language].loading}</p>
               </div>
             </div>
@@ -520,29 +529,29 @@
         return (
           <>
             <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-health')}>
+              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('health-horoscope-content', false)}>
                 <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heartbeat mr-3 text-red-500"></i><span>{translations[language].healthTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-health'] ? 'rotated-icon' : ''}`}></i>
+                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['health-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
               </button>
-              <div id="daily-horoscope-health" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-health'] ? 'active' : ''}`}>
+              <div id="health-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['health-horoscope-content'] ? 'active' : ''}`}>
                 <p className="text-gray-600">{horoscopes.health_horoscope || translations[language].loading}</p>
               </div>
             </div>
             <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-social-life')}>
+              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('social-horoscope-content', false)}>
                 <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-users mr-3 text-indigo-500"></i><span>{translations[language].socialLifeTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-social-life'] ? 'rotated-icon' : ''}`}></i>
+                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['social-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
               </button>
-              <div id="daily-horoscope-social-life" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-social-life'] ? 'active' : ''}`}>
+              <div id="social-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['social-horoscope-content'] ? 'active' : ''}`}>
                 <p className="text-gray-600">{horoscopes.social_horoscope || translations[language].loading}</p>
               </div>
             </div>
             <div className="border-t border-gray-200">
-              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-family-health')}>
+              <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('family-health-horoscope-content', false)}>
                 <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-hand-holding-heart mr-3 text-pink-500"></i><span>{translations[language].familyHealthTitle}</span></span>
-                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-family-health'] ? 'rotated-icon' : ''}`}></i>
+                <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['family-health-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
               </button>
-              <div id="daily-horoscope-family-health" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-family-health'] ? 'active' : ''}`}>
+              <div id="family-health-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['family-health-horoscope-content'] ? 'active' : ''}`}>
                 <p className="text-gray-600">{horoscopes.family_health_horoscope || translations[language].loading}</p>
               </div>
             </div>
@@ -626,8 +635,10 @@
 
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-4 p-4">{translations[language].horoscopeHeader}</h2>
+                
+                {/* Daily Horoscope Section */}
                 <div className="border-t border-gray-200">
-                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-content')}>
+                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-content', true)}>
                     <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-sun mr-3 text-yellow-500"></i><span>{translations[language].dailyHoroscopeTitle}</span></span>
                     <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
                   </button>
@@ -639,8 +650,9 @@
                   </div>
                 </div>
 
+                {/* Relationships Section */}
                 <div className="border-t border-gray-200">
-                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('relationships-content')}>
+                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('relationships-content', true)}>
                     <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heart mr-3 text-red-500"></i><span>{translations[language].relationshipsTitle}</span></span>
                     <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['relationships-content'] ? 'rotated-icon' : ''}`}></i>
                   </button>
@@ -649,8 +661,9 @@
                   </div>
                 </div>
 
+                {/* Weekly Horoscope Section */}
                 <div className="border-t border-gray-200">
-                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('weekly-horoscope-content')}>
+                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('weekly-horoscope-content', true)}>
                     <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-calendar-week mr-3 text-blue-500"></i><span>{translations[language].weeklyHoroscopeTitle}</span></span>
                     <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['weekly-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
                   </button>
@@ -659,8 +672,9 @@
                   </div>
                 </div>
 
+                {/* Monthly Horoscope Section */}
                 <div className="border-t border-gray-200">
-                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('monthly-horoscope-content')}>
+                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('monthly-horoscope-content', true)}>
                     <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-calendar-days mr-3 text-green-500"></i><span>{translations[language].monthlyHoroscopeTitle}</span></span>
                     <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['monthly-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
                   </button>
@@ -669,8 +683,9 @@
                   </div>
                 </div>
 
+                {/* Yearly Horoscope Section */}
                 <div className="border-t border-gray-200">
-                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('yearly-horoscope-content')}>
+                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('yearly-horoscope-content', true)}>
                     <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-calendar-alt mr-3 text-purple-500"></i><span>{translations[language].yearlyHoroscopeTitle}</span></span>
                     <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['yearly-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
                   </button>
