@@ -226,7 +226,7 @@
                     }
                 };
 
-                const apiKey = "";
+                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                 let retryCount = 0;
@@ -316,7 +316,7 @@
                 document.getElementById('daily-horoscope').innerHTML = `<p class="text-gray-600">${data.daily_horoscope}</p>`;
                 document.getElementById('weekly-horoscope').innerHTML = `<p class="text-gray-600">${data.weekly_horoscope}</p>`;
                 document.getElementById('monthly-horoscope').innerHTML = `<p class="text-gray-600">${data.monthly_horoscope}</p>`;
-                document.html = `<p class="text-gray-600">${data.yearly_horoscope}</p>`;
+                document.getElementById('yearly-horoscope').innerHTML = `<p class="text-gray-600">${data.yearly_horoscope}</p>`;
                 document.getElementById('life-stages').innerHTML = `<p class="text-gray-600">${data.life_stages}</p>`;
                 document.getElementById('relationships').innerHTML = `<p class="text-gray-600">${data.relationships}</p>`;
             }
