@@ -75,7 +75,6 @@
       errorRetrieval: 'Could not retrieve astrological details. Please try again.',
       errorOccurred: 'An error occurred. Details:',
       astrologicalDetailsHeader: 'Astrological Details',
-      planetaryInfluencesTitle: 'Current Planetary Influences',
       horoscopeHeader: 'Horoscopes',
       dailyHoroscopeTitle: 'Daily Horoscope',
       relationshipsTitle: 'Daily Relationship Insights',
@@ -116,7 +115,6 @@
       errorRetrieval: 'ज्योतिषीय विवरण प्राप्त गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।',
       errorOccurred: 'एक त्रुटि भयो। विवरण:',
       astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
-      planetaryInfluencesTitle: 'हालको ग्रहहरूको प्रभाव',
       horoscopeHeader: 'राशिफल',
       dailyHoroscopeTitle: 'दैनिक राशिफल',
       relationshipsTitle: 'दैनिक सम्बन्धको जानकारी',
@@ -157,7 +155,6 @@
       errorRetrieval: 'ज्योतिषीय विवरण प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।',
       errorOccurred: 'एक त्रुटि हुई। विवरण:',
       astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
-      planetaryInfluencesTitle: 'वर्तमान ग्रहों का प्रभाव',
       horoscopeHeader: 'राशिफल',
       dailyHoroscopeTitle: 'दैनिक राशिफल',
       relationshipsTitle: 'दैनिक संबंध अंतर्दृष्टि',
@@ -224,20 +221,19 @@
     `;
 
     promptText += `Use the provided Rashi and Nakshatra data to inform the astrological readings.
-        The JSON object should have the following string properties:
+        The JSON object should have the following string properties, with planetary influences seamlessly integrated into each horoscope section:
         - 'astrological_details': A detailed and elaborate astrological reading including the person's Rashi.
         - 'birthplace_description': A short paragraph about the provided birthplace.
-        - 'planetary_influences': A detailed and believable paragraph about the current planetary positions and their specific astrological influences on the person's life, including how specific planets like Jupiter, Saturn, Mars, etc., are affecting their daily life.
-        - 'daily_horoscope': A detailed and specific daily horoscope for today's date: ${currentDate}. This must also include a specific reading based on the person's Nakshatra, seamlessly integrated into the main paragraph.
-        - 'relationships': A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids.
-        - 'weekly_horoscope': An elaborated paragraph for their horoscope for the coming week.
-        - 'monthly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming month.
-        - 'yearly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming year.
-        - 'job_horoscope': A specific daily horoscope focusing on their job and career.
-        - 'finance_horoscope': A specific daily horoscope focusing on their overall financial status.
-        - 'education_horoscope': A specific daily horoscope focusing on education and learning.
-        - 'health_horoscope': A specific daily horoscope focusing on health.
-        - 'spouse_relationships_horoscope': A specific daily horoscope focusing on their relationship with their spouse.
+        - 'daily_horoscope': A detailed and specific daily horoscope for today's date: ${currentDate}. This must also include a specific reading based on the person's Nakshatra, and current planetary positions and their influences, seamlessly integrated into the main paragraph.
+        - 'relationships': A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids, incorporating the influence of planets on these relationships.
+        - 'weekly_horoscope': An elaborated paragraph for their horoscope for the coming week, mentioning the changing planetary transits.
+        - 'monthly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming month, highlighting the major planetary changes and their impact.
+        - 'yearly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming year, focusing on major long-term planetary influences.
+        - 'job_horoscope': A specific daily horoscope focusing on their job and career, mentioning planetary influences on their professional life.
+        - 'finance_horoscope': A specific daily horoscope focusing on their overall financial status, discussing the role of planets in their financial prospects.
+        - 'education_horoscope': A specific daily horoscope focusing on education and learning, and how planetary movements affect their academic pursuits.
+        - 'health_horoscope': A specific daily horoscope focusing on health, and how planets might be influencing their well-being.
+        - 'spouse_relationships_horoscope': A specific daily horoscope focusing on their relationship with their spouse, explaining the planetary aspects affecting their married life.
     `;
 
     const schema = {
@@ -245,7 +241,6 @@
       properties: {
         "astrological_details": { "type": "STRING" },
         "birthplace_description": { "type": "STRING" },
-        "planetary_influences": { "type": "STRING" },
         "daily_horoscope": { "type": "STRING" },
         "weekly_horoscope": { "type": "STRING" },
         "monthly_horoscope": { "type": "STRING" },
@@ -257,7 +252,7 @@
         "health_horoscope": { "type": "STRING" },
         "spouse_relationships_horoscope": { "type": "STRING" },
       },
-      required: ["astrological_details", "birthplace_description", "planetary_influences", "daily_horoscope", "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships", "job_horoscope", "finance_horoscope", "education_horoscope", "health_horoscope", "spouse_relationships_horoscope"]
+      required: ["astrological_details", "birthplace_description", "daily_horoscope", "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships", "job_horoscope", "finance_horoscope", "education_horoscope", "health_horoscope", "spouse_relationships_horoscope"]
     };
 
     const chatHistory = [{ role: "user", parts: [{ text: promptText + nakshatraRashiData }] }];
@@ -414,7 +409,6 @@
         setAstrologicalDetails({
           details: fastData.astrological_details,
           birthplace_description: fastData.birthplace_description,
-          planetary_influences: fastData.planetary_influences,
         });
         setHoroscopes(prev => ({
           ...prev,
@@ -430,6 +424,7 @@
           spouse_relationships_horoscope: fastData.spouse_relationships_horoscope,
         }));
         setResultsVisible(true);
+        // Initially expand the daily horoscope accordion
         setAccordionState({ 'daily-horoscope-content': true });
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -444,6 +439,7 @@
 
     const toggleAccordion = (targetId, isTopLevel) => {
       setAccordionState(prev => {
+        // Only one top-level accordion can be open at a time
         if (isTopLevel) {
           const newState = {};
           const isCurrentlyOpen = prev[targetId];
@@ -451,6 +447,7 @@
           newState[targetId] = !isCurrentlyOpen;
           return newState;
         } else {
+          // Sub-sections can be toggled independently
           return {
             ...prev,
             [targetId]: !prev[targetId]
@@ -462,6 +459,15 @@
     const renderDailyHoroscopeSubsections = () => {
       return (
         <>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('relationships-content', false)}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heart mr-3 text-red-500"></i><span>{translations[language].relationshipsTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['relationships-content'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="relationships-content" className={`accordion-content p-4 bg-white ${accordionState['relationships-content'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.relationships || translations[language].loading}</p>
+            </div>
+          </div>
           <div className="border-t border-gray-200">
             <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('job-horoscope-content', false)}>
               <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-briefcase mr-3 text-emerald-500"></i><span>{translations[language].jobTitle}</span></span>
@@ -584,19 +590,6 @@
                 </div>
               </div>
 
-              {/* New section for Planetary Influences */}
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <div className="border-t border-gray-200">
-                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('planetary-influences-content', true)}>
-                    <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-satellite mr-3 text-indigo-500"></i><span>{translations[language].planetaryInfluencesTitle}</span></span>
-                    <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['planetary-influences-content'] ? 'rotated-icon' : ''}`}></i>
-                  </button>
-                  <div id="planetary-influences-content" className={`accordion-content p-4 bg-white ${accordionState['planetary-influences-content'] ? 'active' : ''}`}>
-                    <p className="text-gray-600">{astrologicalDetails.planetary_influences || translations[language].loading}</p>
-                  </div>
-                </div>
-              </div>
-
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
                 <h2 className="text-2xl font-semibold text-gray-800 mb-4 p-4">{translations[language].horoscopeHeader}</h2>
                 
@@ -611,17 +604,6 @@
                       <p className="text-gray-600">{horoscopes.daily_horoscope || translations[language].loading}</p>
                     </div>
                     {renderDailyHoroscopeSubsections()}
-                  </div>
-                </div>
-
-                {/* Relationships Section */}
-                <div className="border-t border-gray-200">
-                  <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('relationships-content', true)}>
-                    <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heart mr-3 text-red-500"></i><span>{translations[language].relationshipsTitle}</span></span>
-                    <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['relationships-content'] ? 'rotated-icon' : ''}`}></i>
-                  </button>
-                  <div id="relationships-content" className={`accordion-content p-4 bg-white ${accordionState['relationships-content'] ? 'active' : ''}`}>
-                    <p className="text-gray-600">{horoscopes.relationships || translations[language].loading}</p>
                   </div>
                 </div>
 
