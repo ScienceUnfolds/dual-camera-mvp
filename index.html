@@ -244,7 +244,7 @@
                     mainSubtitle: 'आफ्नो अद्वितीय ज्योतिषीय अन्तर्दृष्टि प्राप्त गर्न आफ्नो विवरणहरू भर्नुहोस्।',
                     labelLanguage: 'भाषा चयन गर्नुहोस्',
                     labelName: 'पूरा नाम',
-                    placeholderName: 'उदाहरण: जॉन डो',
+                    placeholderName: 'उदाहरण: जोन डो',
                     labelDob: 'जन्म मिति',
                     labelBirthplace: 'जन्म स्थान',
                     placeholderBirthplace: 'उदाहरण: काठमाडौं, नेपाल',
@@ -540,7 +540,8 @@
                     }
                 };
                 
-                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
+                // Please insert your API key here
+                const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
                 let retryCount = 0;
@@ -616,15 +617,28 @@
                 `;
             }
 
+            // Updated function to correctly handle all sections.
             function displayHoroscope(type, data, language) {
-                const headerSpan = document.getElementById(`${type}-horoscope-title`);
-                headerSpan.textContent = translations[language][`${type}HoroscopeTitle`];
-
+                // Handle the relationships section which has a different ID for its header.
                 if (type === 'relationships') {
-                    document.getElementById('relationships-header').textContent = translations[language].relationshipsHeader;
-                    document.getElementById('relationships').innerHTML = `<p class="text-gray-600">${data.relationships}</p>`;
+                    const header = document.getElementById('relationships-header');
+                    if (header) {
+                        header.textContent = translations[language].relationshipsHeader;
+                    }
+                    const contentDiv = document.getElementById('relationships');
+                    if (contentDiv) {
+                        contentDiv.innerHTML = `<p class="text-gray-600">${data.relationships}</p>`;
+                    }
                 } else {
-                    document.getElementById(`${type}-horoscope`).innerHTML = `<p class="text-gray-600">${data[`${type}_horoscope`]}</p>`;
+                    // Handle all other horoscope sections inside the accordion.
+                    const headerSpan = document.getElementById(`${type}-horoscope-title`);
+                    if (headerSpan) {
+                         headerSpan.textContent = translations[language][`${type}HoroscopeTitle`];
+                    }
+                    const contentDiv = document.getElementById(`${type}-horoscope`);
+                    if (contentDiv) {
+                        contentDiv.innerHTML = `<p class="text-gray-600">${data[`${type}_horoscope`]}</p>`;
+                    }
                 }
             }
         });
