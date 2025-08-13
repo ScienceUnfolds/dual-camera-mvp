@@ -172,14 +172,22 @@
     }
   };
 
-  const bsToAd = (bsDate) => {
-    const [bsYear, bsMonth, bsDay] = bsDate.split('-').map(Number);
-    const adYear = bsYear - 56;
-    const adDate = new Date(adYear, bsMonth - 1, bsDay - 15);
-    return `${adDate.getFullYear()}-${String(adDate.getMonth() + 1).padStart(2, '0')}-${String(adDate.getDate()).padStart(2, '0')}`;
+  const calculateAge = (birthDate) => {
+    try {
+      const today = new Date();
+      const dob = new Date(birthDate);
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      return age;
+    } catch (e) {
+      return 0;
+    }
   };
 
-  const getFastLoadingData = async ({ name, dob, birthplace, language, userAge }) => {
+  const getFastLoadingData = async ({ name, dob, dateFormat, birthplace, language, userAge }) => {
     const nakshatraRashiData = `
         Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
         Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
@@ -196,8 +204,13 @@
     `;
 
     const currentDate = new Date().toISOString().slice(0, 10);
+    let dateInfo = `date of birth: ${dob}`;
+    if (dateFormat === 'bs') {
+        dateInfo = `date of birth: ${dob} (Bikram Sambat)`;
+    }
+
     let promptText = `
-        Generate a comprehensive JSON object in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} with the following data points for a person with the name: ${name}, date of birth: ${dob}, and birthplace: ${birthplace}. 
+        Generate a comprehensive JSON object in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} with the following data points for a person with the name: ${name}, ${dateInfo}, and birthplace: ${birthplace}. 
         Use the provided Rashi and Nakshatra data to inform the astrological readings.
         The JSON object should have the following string properties:
         - 'astrological_details': A detailed and elaborate astrological reading including the person's Rashi.
@@ -263,7 +276,7 @@
       }
     };
 
-    const apiKey = "";
+    const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
     let retryCount = 0;
@@ -364,17 +377,6 @@
       setDateFormat(e.target.value);
     };
 
-    const calculateAge = (birthDate) => {
-      const today = new Date();
-      const dob = new Date(birthDate);
-      let age = today.getFullYear() - dob.getFullYear();
-      const m = today.getMonth() - dob.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
-        age--;
-      }
-      return age;
-    };
-
     const handleSubmit = async (e) => {
       e.preventDefault();
 
@@ -404,15 +406,11 @@
         family_health_horoscope: null,
       });
 
-      let dobForApi = dob;
-      if (dateFormat === 'bs') {
-        dobForApi = bsToAd(dob);
-      }
-
-      const age = calculateAge(dobForApi);
+      // Pass dob as is. The prompt will specify the date format.
+      const age = calculateAge(dob);
       setUserAge(age);
 
-      const userDetails = { name, dob: dobForApi, birthplace, language, dateFormat, userAge: age };
+      const userDetails = { name, dob, birthplace, language, dateFormat, userAge: age };
       localStorage.setItem('horoscopeUserDetails', JSON.stringify(userDetails));
 
       setUserInfo(userDetails);
@@ -609,7 +607,7 @@
                 <div>
                   <div className="mb-2">
                     <p className="text-sm font-medium text-gray-700">{translations[language].dateOfBirth}:</p>
-                    <p className="text-gray-600">{userInfo.dob}</p>
+                    <p className="text-gray-600">{userInfo.dob} ({userInfo.dateFormat === 'ad' ? translations[language].dateformatAd : translations[language].dateformatBs})</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-700">{translations[language].birthPlace}:</p>
