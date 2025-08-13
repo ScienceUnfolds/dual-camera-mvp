@@ -194,6 +194,7 @@
   };
 
   const getFastLoadingData = async ({ name, dob, dateFormat, birthplace, language, userAge }) => {
+    // This data is used by the prompt to provide a more accurate reading.
     const nakshatraRashiData = `
         Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
         Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
@@ -224,7 +225,7 @@
         The JSON object should have the following string properties:
         - 'astrological_details': A detailed and elaborate astrological reading including the person's Rashi.
         - 'birthplace_description': A short paragraph about the provided birthplace.
-        - 'daily_horoscope': A detailed and specific daily horoscope for today's date: ${currentDate}.
+        - 'daily_horoscope': A detailed and specific daily horoscope for today's date: ${currentDate}. This must also include a specific reading based on the person's Nakshatra, seamlessly integrated into the main paragraph.
         - 'relationships': A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids.
         - 'weekly_horoscope': An elaborated paragraph for their horoscope for the coming week.
         - 'monthly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming month.
