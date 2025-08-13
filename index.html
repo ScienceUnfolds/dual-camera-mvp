@@ -172,6 +172,14 @@
                 const birthplace = document.getElementById('birthplace').value;
                 const language = document.getElementById('language').value;
 
+                // Validate form inputs
+                if (!name || !dob || !birthplace) {
+                    const title = language === 'ne' ? 'त्रुटि' : 'Error';
+                    const message = language === 'ne' ? 'कृपया सबै जानकारी भर्नुहोस्।' : 'Please fill in all the details.';
+                    showAlert(title, message);
+                    return;
+                }
+
                 // Save user details to local storage
                 const userDetails = { name, dob, birthplace, language };
                 localStorage.setItem('horoscopeUserDetails', JSON.stringify(userDetails));
@@ -192,7 +200,9 @@
                     }
                 } catch (error) {
                     console.error('Error fetching data:', error);
-                    showAlert('Error', language === 'ne' ? 'एक त्रुटि भयो। कृपया फेरि प्रयास गर्नुहोस्।' : 'An error occurred. Please try again.');
+                    const title = language === 'ne' ? 'त्रुटि' : 'Error';
+                    const message = language === 'ne' ? `एक त्रुटि भयो। विवरण: ${error.message}` : `An error occurred. Details: ${error.message}`;
+                    showAlert(title, message);
                 } finally {
                     // Hide loading indicator and re-enable button
                     loading.classList.add('hidden');
@@ -258,12 +268,10 @@
                             result.candidates[0].content && result.candidates[0].content.parts &&
                             result.candidates[0].content.parts.length > 0) {
                             const jsonText = result.candidates[0].content.parts[0].text;
-                            // Attempt to parse JSON. Sometimes the LLM includes extra text.
                             try {
                                 return JSON.parse(jsonText);
                             } catch (parseError) {
                                 console.error('Failed to parse JSON:', parseError);
-                                // Try to extract JSON from the text
                                 const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
                                 if (jsonMatch) {
                                     return JSON.parse(jsonMatch[0]);
