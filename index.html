@@ -441,6 +441,7 @@
             });
 
             async function getAstrologicalData({ name, dob, birthplace, language, type }) {
+                // Rashi, nakshetras, and name table provided by the user.
                 const nakshatraRashiData = `
                     Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
                     Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
@@ -540,7 +541,6 @@
                     }
                 };
                 
-                // Please insert your API key here
                 const apiKey = "";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
@@ -637,7 +637,9 @@
                     }
                     const contentDiv = document.getElementById(`${type}-horoscope`);
                     if (contentDiv) {
-                        contentDiv.innerHTML = `<p class="text-gray-600">${data[`${type}_horoscope`]}</p>`;
+                        // The life-stages API response key is 'life_stages', not 'life_stages_horoscope'
+                        const contentKey = type === 'life-stages' ? 'life_stages' : `${type}_horoscope`;
+                        contentDiv.innerHTML = `<p class="text-gray-600">${data[contentKey]}</p>`;
                     }
                 }
             }
