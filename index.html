@@ -1,13 +1,512 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personalized Horoscope</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <style>
+import { useState, useEffect } from 'react';
+
+const translations = {
+  en: {
+    mainTitle: 'Personalized Horoscope & Astrology',
+    mainSubtitle: 'Enter your details to get your unique astrological insights.',
+    labelLanguage: 'Select Language',
+    labelName: 'Full Name',
+    placeholderName: 'e.g., John Doe',
+    labelDob: 'Date of Birth',
+    placeholderDobAd: 'YYYY-MM-DD',
+    placeholderDobBs: 'YYYY-MM-DD BS',
+    labelBirthplace: 'Birth Place',
+    placeholderBirthplace: 'e.g., Kathmandu, Nepal',
+    submitBtn: 'Get My Horoscope',
+    pleaseWait: 'Please wait...',
+    errorTitle: 'Error',
+    errorMessage: 'Please fill in all the details.',
+    errorRetrieval: 'Could not retrieve astrological details. Please try again.',
+    errorOccurred: 'An error occurred. Details:',
+    astrologicalDetailsHeader: 'Astrological Details',
+    horoscopeHeader: 'Horoscopes',
+    dailyHoroscopeTitle: 'Daily Horoscope',
+    relationshipsTitle: 'Daily Relationship Insights',
+    weeklyHoroscopeTitle: 'Weekly Horoscope',
+    monthlyHoroscopeTitle: 'Monthly Horoscope',
+    yearlyHoroscopeTitle: 'Yearly Horoscope',
+    userInfoHeader: 'User Details',
+    dateOfBirth: 'Date of Birth',
+    birthPlace: 'Birth Place',
+    dateformatAd: 'AD',
+    dateformatBs: 'विक्रम संवत्',
+    loading: 'Loading...',
+    failedToLoad: 'Failed to load this section.',
+    educationTitle: 'Education',
+    healthTitle: 'Health',
+    jobTitle: 'Job',
+    financeTitle: 'Overall Finance Status',
+    socialLifeTitle: 'Social Life',
+    familyHealthTitle: 'Family Health',
+  },
+  ne: {
+    mainTitle: 'व्यक्तिगत राशिफल र ज्योतिष',
+    mainSubtitle: 'आफ्नो अद्वितीय ज्योतिषीय अन्तर्दृष्टि प्राप्त गर्न आफ्नो विवरणहरू भर्नुहोस्।',
+    labelLanguage: 'भाषा चयन गर्नुहोस्',
+    labelName: 'पूरा नाम',
+    placeholderName: 'उदाहरण: जोन डो',
+    labelDob: 'जन्म मिति',
+    placeholderDobAd: 'YYYY-MM-DD',
+    placeholderDobBs: 'YYYY-MM-DD BS',
+    labelBirthplace: 'जन्म स्थान',
+    placeholderBirthplace: 'उदाहरण: काठमाडौं, नेपाल',
+    submitBtn: 'मेरो राशिफल प्राप्त गर्नुहोस्',
+    pleaseWait: 'कृपया पर्खनुहोस्...',
+    errorTitle: 'त्रुटि',
+    errorMessage: 'कृपया सबै जानकारी भर्नुहोस्।',
+    errorRetrieval: 'ज्योतिषीय विवरण प्राप्त गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।',
+    errorOccurred: 'एक त्रुटि भयो। विवरण:',
+    astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
+    horoscopeHeader: 'राशिफल',
+    dailyHoroscopeTitle: 'दैनिक राशिफल',
+    relationshipsTitle: 'दैनिक सम्बन्धको जानकारी',
+    weeklyHoroscopeTitle: 'साप्ताहिक राशिफल',
+    monthlyHoroscopeTitle: 'मासिक राशिफल',
+    yearlyHoroscopeTitle: 'वार्षिक राशिफल',
+    userInfoHeader: 'प्रयोगकर्ता विवरण',
+    dateOfBirth: 'जन्म मिति',
+    birthPlace: 'जन्म स्थान',
+    dateformatAd: 'ई.सं.',
+    dateformatBs: 'विक्रम संवत्',
+    loading: 'लोड हुँदैछ...',
+    failedToLoad: 'यो खण्ड लोड हुन सकेन।',
+    educationTitle: 'शिक्षा',
+    healthTitle: 'स्वास्थ्य',
+    jobTitle: 'रोजगारी',
+    financeTitle: 'समग्र वित्तीय स्थिति',
+    socialLifeTitle: 'सामाजिक जीवन',
+    familyHealthTitle: 'पारिवारिक स्वास्थ्य',
+  },
+  hi: {
+    mainTitle: 'व्यक्तिगत राशिफल और ज्योतिष',
+    mainSubtitle: 'अपनी अद्वितीय ज्योतिषीय अंतर्दृष्टि प्राप्त करने के लिए अपना विवरण दर्ज करें।',
+    labelLanguage: 'भाषा चुनें',
+    labelName: 'पूरा नाम',
+    placeholderName: 'उदाहरण: जॉन डो',
+    labelDob: 'जन्म तिथि',
+    placeholderDobAd: 'YYYY-MM-DD',
+    placeholderDobBs: 'YYYY-MM-DD BS',
+    labelBirthplace: 'जन्म स्थान',
+    placeholderBirthplace: 'उदाहरण: काठमांडू, नेपाल',
+    submitBtn: 'मेरा राशिफल प्राप्त करें',
+    pleaseWait: 'कृपया प्रतीक्षा करें...',
+    errorTitle: 'त्रुटी',
+    errorMessage: 'कृपया सभी विवरण भरें।',
+    errorRetrieval: 'ज्योतिषीय विवरण प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।',
+    errorOccurred: 'एक त्रुटि हुई। विवरण:',
+    astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
+    horoscopeHeader: 'राशिफल',
+    dailyHoroscopeTitle: 'दैनिक राशिफल',
+    relationshipsTitle: 'दैनिक संबंध अंतर्दृष्टि',
+    weeklyHoroscopeTitle: 'साप्ताहिक राशिफल',
+    monthlyHoroscopeTitle: 'मासिक राशिफल',
+    yearlyHoroscopeTitle: 'वार्षिक राशिफल',
+    userInfoHeader: 'उपयोगकर्ता विवरण',
+    dateOfBirth: 'जन्म तिथि',
+    birthPlace: 'जन्म स्थान',
+    dateformatAd: 'ईस्वी',
+    dateformatBs: 'विक्रम संवत्',
+    loading: 'लोड हो रहा है...',
+    failedToLoad: 'यह खंड लोड नहीं हो सका।',
+    educationTitle: 'शिक्षा',
+    healthTitle: 'स्वास्थ्य',
+    jobTitle: 'नौकरी',
+    financeTitle: 'समग्र वित्तीय स्थिति',
+    socialLifeTitle: 'सामाजिक जीवन',
+    familyHealthTitle: 'पारिवारिक स्वास्थ्य',
+  }
+};
+
+// Function to convert BS to AD (Simplified approximation)
+const bsToAd = (bsDate) => {
+  const [bsYear, bsMonth, bsDay] = bsDate.split('-').map(Number);
+  const adYear = bsYear - 56;
+  const adDate = new Date(adYear, bsMonth - 1, bsDay - 15);
+  return `${adDate.getFullYear()}-${String(adDate.getMonth() + 1).padStart(2, '0')}-${String(adDate.getDate()).padStart(2, '0')}`;
+};
+
+const getFastLoadingData = async ({ name, dob, birthplace, language, userAge }) => {
+  const nakshatraRashiData = `
+      Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
+      Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
+      Rashi: मिथुन (Mithuna), नक्षेत्र: आद्रा (Audra), पुनर्वसु (Punarvasu), नामको सुरुको अक्षर: का, कि, कु, के, को, हा, हि, हु, हे, हो, दा, दी, दु, दे, दो
+      Rashi: कर्कट (Karkata), नक्षेत्र: पुष्य (Pushya), आश्लेषा (Ashlesha), नामको सुरुको अक्षर: हु, हे, हो, डा, डि, डु, डे, डो
+      Rashi: सिंह (Simha), नक्षेत्र: माघ (Magha), पूर्वाफाल्गुनी (Poorva Phalguni), उत्तराफाल्गुनी (Uttara Phalguni), नामको सुरुको अक्षर: मा, मी, मु, मे, मो, टा, टी, टु, टे, टो
+      Rashi: कन्या (Kanya), नक्षेत्र: हस्त (Hastha), चित्रा (Chitra), नामको सुरुको अक्षर: पा, पी, पू, ष, ण, ठ, पे, पो, रा, री, रु, रे, रो, ता, ती, तु, ते, तो
+      Rashi: तुला (Tula), नक्षेत्र: स्वाती (Swati), विशाखा (Visakha), नामको सुरुको अक्षर: रा, री, रु, रे, रो, ता, ती, तु, ते, तो
+      Rashi: वृश्चिक (Vrishchika), नक्षेत्र: अनुराधा (Anuradha), ज्येष्ठा (Jyestha), नामको सुरुको अक्षर: तो, ना, नी, नु, ने, नो, या, यी, यु, ये, यो
+      Rashi: धनु (Dhanus), नक्षेत्र: मूल (Moola), पूर्वाषाढा (Purva Ashadha), उत्तराषाढा (Uttarashada), नामको सुरुको अक्षर: ये, यो, भ, ध, फा, ढा, भे, भो, गा, गी
+      Rashi: मकर (Makara), नक्षेत्र: श्रवण (Sravana), धनिष्ठा (Dhanishta), नामको सुरुको अक्षर: भो, जा, जी, जु, जे, जो, खा, खी, खु, खे, खो, ग, गी
+      Rashi: कुम्भ (Kumbha), नक्षेत्र: शतभिषा (Sathabisham), पूर्वभाद्रपद (Purvabhadra), नामको सुरुको अक्षर: गो, सा, सी, सु, से, सो, दा, दी, दु, दे, दो, चा, ची
+      Rashi: मीन (Meena), नक्षेत्र: उत्तरभाद्रपद (Uttarabhadra), रेवती (Revati), नामको सुरुको अक्षर: दि, दु, थ, झ, ञ, दे, दो, च, चि, द, दी
+  `;
+
+  const currentDate = new Date().toISOString().slice(0, 10);
+  let promptText = `
+      Generate a comprehensive JSON object in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} with the following data points for a person with the name: ${name}, date of birth: ${dob}, and birthplace: ${birthplace}. 
+      Use the provided Rashi and Nakshatra data to inform the astrological readings.
+      The JSON object should have the following string properties:
+      - 'astrological_details': A detailed and elaborate astrological reading including the person's Rashi.
+      - 'birthplace_description': A short paragraph about the provided birthplace.
+      - 'daily_horoscope': A detailed and specific daily horoscope for today's date: ${currentDate}.
+      - 'relationships': A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids.
+      - 'weekly_horoscope': An elaborated paragraph for their horoscope for the coming week.
+      - 'monthly_horoscope': An elaborated paragraph for their horoscope for the coming month.
+      - 'yearly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming year.
+  `;
+
+  const schema = {
+    type: "OBJECT",
+    properties: {
+      "astrological_details": { "type": "STRING" },
+      "birthplace_description": { "type": "STRING" },
+      "daily_horoscope": { "type": "STRING" },
+      "weekly_horoscope": { "type": "STRING" },
+      "monthly_horoscope": { "type": "STRING" },
+      "yearly_horoscope": { "type": "STRING" },
+      "relationships": { "type": "STRING" }
+    },
+    required: ["astrological_details", "birthplace_description", "daily_horoscope", "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships"]
+  };
+
+  // Add age-specific prompts and schema properties
+  if (userAge < 20) {
+    promptText += `
+      - 'education_horoscope': A specific daily horoscope focusing on education.
+      - 'health_horoscope': A specific daily horoscope focusing on health.
+    `;
+    schema.properties.education_horoscope = { "type": "STRING" };
+    schema.properties.health_horoscope = { "type": "STRING" };
+    schema.required.push('education_horoscope', 'health_horoscope');
+  } else if (userAge >= 20 && userAge <= 60) {
+    promptText += `
+      - 'education_horoscope': A specific daily horoscope focusing on education and learning.
+      - 'job_horoscope': A specific daily horoscope focusing on their job and career.
+      - 'finance_horoscope': A specific daily horoscope focusing on their overall finance status.
+    `;
+    schema.properties.education_horoscope = { "type": "STRING" };
+    schema.properties.job_horoscope = { "type": "STRING" };
+    schema.properties.finance_horoscope = { "type": "STRING" };
+    schema.required.push('education_horoscope', 'job_horoscope', 'finance_horoscope');
+  } else if (userAge > 60) {
+    promptText += `
+      - 'health_horoscope': A specific daily horoscope focusing on their health.
+      - 'social_horoscope': A specific daily horoscope focusing on their social life.
+      - 'family_health_horoscope': A specific daily horoscope focusing on the health of their family.
+    `;
+    schema.properties.health_horoscope = { "type": "STRING" };
+    schema.properties.social_horoscope = { "type": "STRING" };
+    schema.properties.family_health_horoscope = { "type": "STRING" };
+    schema.required.push('health_horoscope', 'social_horoscope', 'family_health_horoscope');
+  }
+
+
+  const chatHistory = [{ role: "user", parts: [{ text: promptText + nakshatraRashiData }] }];
+  const payload = {
+    contents: chatHistory,
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: schema
+    }
+  };
+
+  const apiKey = "";
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+  let retryCount = 0;
+  const maxRetries = 5;
+  const initialDelay = 1000;
+
+  while (retryCount < maxRetries) {
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          const delay = initialDelay * Math.pow(2, retryCount);
+          console.warn(`API rate limit exceeded. Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          retryCount++;
+          continue;
+        } else {
+          throw new Error(`API returned status code: ${response.status}`);
+        }
+      }
+
+      const result = await response.json();
+      if (result.candidates && result.candidates.length > 0 &&
+        result.candidates[0].content && result.candidates[0].content.parts &&
+        result.candidates[0].content.parts.length > 0) {
+        const jsonText = result.candidates[0].content.parts[0].text;
+        try {
+          const parsedJson = JSON.parse(jsonText);
+          return parsedJson;
+        } catch (parseError) {
+          console.error('Failed to parse JSON:', parseError);
+          const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+          }
+          throw new Error('Invalid JSON format received from API.');
+        }
+      } else {
+        throw new Error('Unexpected API response structure or no content.');
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      throw error;
+    }
+  }
+  throw new Error('Max API retries exceeded for fast-loading data.');
+};
+
+
+const App = () => {
+  const [language, setLanguage] = useState('en');
+  const [name, setName] = useState('');
+  const [dob, setDob] = useState('');
+  const [dateFormat, setDateFormat] = useState('ad');
+  const [birthplace, setBirthplace] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [resultsVisible, setResultsVisible] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+  const [astrologicalDetails, setAstrologicalDetails] = useState(null);
+  const [horoscopes, setHoroscopes] = useState({
+    daily_horoscope: null,
+    relationships: null,
+    weekly_horoscope: null,
+    monthly_horoscope: null,
+    yearly_horoscope: null,
+    education_horoscope: null,
+    health_horoscope: null,
+    job_horoscope: null,
+    finance_horoscope: null,
+    social_horoscope: null,
+    family_health_horoscope: null,
+  });
+  const [userAge, setUserAge] = useState(null);
+  const [accordionState, setAccordionState] = useState({});
+  const [alert, setAlert] = useState(null);
+
+  useEffect(() => {
+    const savedDetails = localStorage.getItem('horoscopeUserDetails');
+    if (savedDetails) {
+      const userDetails = JSON.parse(savedDetails);
+      setName(userDetails.name || '');
+      setDob(userDetails.dob || '');
+      setBirthplace(userDetails.birthplace || '');
+      setLanguage(userDetails.language || 'en');
+      setDateFormat(userDetails.dateFormat || 'ad');
+    }
+  }, []);
+
+  const handleLanguageChange = (e) => {
+    setLanguage(e.target.value);
+  };
+
+  const handleDateFormatChange = (e) => {
+    setDateFormat(e.target.value);
+  };
+
+  const calculateAge = (birthDate) => {
+    const today = new Date();
+    const dob = new Date(birthDate);
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!name || !dob || !birthplace) {
+      setAlert({
+        title: translations[language].errorTitle,
+        message: translations[language].errorMessage
+      });
+      return;
+    }
+
+    setLoading(true);
+    setResultsVisible(false);
+    setUserInfo(null);
+    setAstrologicalDetails(null);
+    setHoroscopes({
+      daily_horoscope: null,
+      relationships: null,
+      weekly_horoscope: null,
+      monthly_horoscope: null,
+      yearly_horoscope: null,
+      education_horoscope: null,
+      health_horoscope: null,
+      job_horoscope: null,
+      finance_horoscope: null,
+      social_horoscope: null,
+      family_health_horoscope: null,
+    });
+
+    let dobForApi = dob;
+    if (dateFormat === 'bs') {
+      dobForApi = bsToAd(dob);
+    }
+
+    const age = calculateAge(dobForApi);
+    setUserAge(age);
+
+    const userDetails = { name, dob: dobForApi, birthplace, language, dateFormat, userAge: age };
+    localStorage.setItem('horoscopeUserDetails', JSON.stringify(userDetails));
+
+    // Display user info immediately
+    setUserInfo(userDetails);
+
+    try {
+      const fastData = await getFastLoadingData(userDetails);
+      setAstrologicalDetails({
+        details: fastData.astrological_details,
+        birthplace_description: fastData.birthplace_description
+      });
+      setHoroscopes(prev => ({
+        ...prev,
+        daily_horoscope: fastData.daily_horoscope,
+        relationships: fastData.relationships,
+        weekly_horoscope: fastData.weekly_horoscope,
+        monthly_horoscope: fastData.monthly_horoscope,
+        yearly_horoscope: fastData.yearly_horoscope,
+        education_horoscope: fastData.education_horoscope,
+        health_horoscope: fastData.health_horoscope,
+        job_horoscope: fastData.job_horoscope,
+        finance_horoscope: fastData.finance_horoscope,
+        social_horoscope: fastData.social_horoscope,
+        family_health_horoscope: fastData.family_health_horoscope,
+      }));
+      setResultsVisible(true);
+      setAccordionState({ 'daily-horoscope-content': true });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setAlert({
+        title: translations[language].errorTitle,
+        message: `${translations[language].errorOccurred} ${error.message}`
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleAccordion = (target) => {
+    setAccordionState(prev => {
+      const isCurrentlyOpen = prev[target];
+      const newState = {};
+      Object.keys(prev).forEach(key => newState[key] = false); // Close all others
+      newState[target] = !isCurrentlyOpen; // Toggle the clicked one
+      return newState;
+    });
+  };
+
+  const renderDailyHoroscopeSubsections = () => {
+    if (userAge === null) return null;
+
+    if (userAge < 20) {
+      return (
+        <>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-education')}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-graduation-cap mr-3 text-cyan-500"></i><span>{translations[language].educationTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-education'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="daily-horoscope-education" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-education'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.education_horoscope || translations[language].loading}</p>
+            </div>
+          </div>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-health')}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heartbeat mr-3 text-red-500"></i><span>{translations[language].healthTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-health'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="daily-horoscope-health" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-health'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.health_horoscope || translations[language].loading}</p>
+            </div>
+          </div>
+        </>
+      );
+    } else if (userAge >= 20 && userAge <= 60) {
+      return (
+        <>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-education')}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-graduation-cap mr-3 text-cyan-500"></i><span>{translations[language].educationTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-education'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="daily-horoscope-education" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-education'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.education_horoscope || translations[language].loading}</p>
+            </div>
+          </div>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-job')}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-briefcase mr-3 text-emerald-500"></i><span>{translations[language].jobTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-job'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="daily-horoscope-job" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-job'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.job_horoscope || translations[language].loading}</p>
+            </div>
+          </div>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-finance')}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-sack-dollar mr-3 text-amber-500"></i><span>{translations[language].financeTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-finance'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="daily-horoscope-finance" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-finance'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.finance_horoscope || translations[language].loading}</p>
+            </div>
+          </div>
+        </>
+      );
+    } else if (userAge > 60) {
+      return (
+        <>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-health')}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heartbeat mr-3 text-red-500"></i><span>{translations[language].healthTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-health'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="daily-horoscope-health" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-health'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.health_horoscope || translations[language].loading}</p>
+            </div>
+          </div>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-social-life')}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-users mr-3 text-indigo-500"></i><span>{translations[language].socialLifeTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-social-life'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="daily-horoscope-social-life" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-social-life'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.social_horoscope || translations[language].loading}</p>
+            </div>
+          </div>
+          <div className="border-t border-gray-200">
+            <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-family-health')}>
+              <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-hand-holding-heart mr-3 text-pink-500"></i><span>{translations[language].familyHealthTitle}</span></span>
+              <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-family-health'] ? 'rotated-icon' : ''}`}></i>
+            </button>
+            <div id="daily-horoscope-family-health" className={`accordion-content p-4 bg-white ${accordionState['daily-horoscope-family-health'] ? 'active' : ''}`}>
+              <p className="text-gray-600">{horoscopes.family_health_horoscope || translations[language].loading}</p>
+            </div>
+          </div>
+        </>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+      <style>
+        {`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
@@ -32,736 +531,166 @@
             transition: max-height 0.3s ease-out;
         }
         .accordion-content.active {
-            max-height: 1000px; /* A large number to allow for content expansion */
+            max-height: 1000px;
             transition: max-height 0.5s ease-in;
         }
         .rotated-icon {
             transform: rotate(180deg);
             transition: transform 0.3s ease-in-out;
         }
-    </style>
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+        `}
+      </style>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"></link>
 
-    <div class="container mx-auto p-6 bg-white rounded-xl shadow-lg w-full max-w-4xl">
-        <div class="text-center mb-8">
-            <h1 id="main-title" class="text-4xl font-bold text-gray-800 mb-2">Personalized Horoscope & Astrology</h1>
-            <p id="main-subtitle" class="text-gray-600">Enter your details to get your unique astrological insights.</p>
+      <div className="container mx-auto p-6 bg-white rounded-xl shadow-lg w-full max-w-4xl">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">{translations[language].mainTitle}</h1>
+          <p className="text-gray-600">{translations[language].mainSubtitle}</p>
         </div>
 
-        <!-- Input Form -->
-        <form id="horoscope-form" class="space-y-6">
-            <!-- Language Selection -->
-            <div>
-                <label for="language" id="label-language" class="block text-sm font-medium text-gray-700">Select Language</label>
-                <select id="language" name="language" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm">
-                    <option value="en">English</option>
-                    <option value="ne">Nepali</option>
-                    <option value="hi">Hindi</option>
-                </select>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="language" className="block text-sm font-medium text-gray-700">{translations[language].labelLanguage}</label>
+            <select id="language" name="language" value={language} onChange={handleLanguageChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm">
+              <option value="en">English</option>
+              <option value="ne">Nepali</option>
+              <option value="hi">Hindi</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">{translations[language].labelName}</label>
+            <input type="text" id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder={translations[language].placeholderName} />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2 mb-1">
+              <label htmlFor="dob" className="block text-sm font-medium text-gray-700">{translations[language].labelDob}</label>
+              <select id="date-format" value={dateFormat} onChange={handleDateFormatChange} className="text-sm border border-gray-300 rounded-md py-1 px-2 focus:outline-none">
+                <option value="ad">{translations[language].dateformatAd}</option>
+                <option value="bs">{translations[language].dateformatBs}</option>
+              </select>
             </div>
-
-            <!-- Name Input -->
-            <div>
-                <label for="name" id="label-name" class="block text-sm font-medium text-gray-700">Full Name</label>
-                <input type="text" id="name" name="name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="e.g., John Doe">
-            </div>
-
-            <!-- Date of Birth Input -->
-            <div>
-                <div class="flex items-center space-x-2 mb-1">
-                    <label for="dob" id="label-dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
-                    <select id="date-format" class="text-sm border border-gray-300 rounded-md py-1 px-2 focus:outline-none">
-                        <option value="ad">AD</option>
-                        <option value="bs">BS</option>
-                    </select>
-                </div>
-                <input type="text" id="dob" name="dob" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="YYYY-MM-DD">
-            </div>
-
-            <!-- Birth Place Input -->
-            <div>
-                <label for="birthplace" id="label-birthplace" class="block text-sm font-medium text-gray-700">Birth Place</label>
-                <input type="text" id="birthplace" name="birthplace" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="e.g., Kathmandu, Nepal">
-            </div>
-
-            <!-- Submit Button -->
-            <div>
-                <button type="submit" id="submit-btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out">
-                    <i class="fa-solid fa-magic mr-2"></i> Get My Horoscope
-                </button>
-            </div>
+            <input type="text" id="dob" name="dob" value={dob} onChange={(e) => setDob(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder={dateFormat === 'ad' ? translations[language].placeholderDobAd : translations[language].placeholderDobBs} />
+          </div>
+          <div>
+            <label htmlFor="birthplace" className="block text-sm font-medium text-gray-700">{translations[language].labelBirthplace}</label>
+            <input type="text" id="birthplace" name="birthplace" value={birthplace} onChange={(e) => setBirthplace(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder={translations[language].placeholderBirthplace} />
+          </div>
+          <div>
+            <button type="submit" disabled={loading} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out">
+              <i className="fa-solid fa-magic mr-2"></i> {loading ? translations[language].pleaseWait : translations[language].submitBtn}
+            </button>
+          </div>
         </form>
 
-        <!-- Loading Indicator -->
-        <div id="loading" class="hidden flex justify-center items-center mt-8">
-            <div class="loading-spinner"></div>
-        </div>
-        
-        <!-- Results Section with Accordion -->
-        <div id="results" class="hidden mt-8 space-y-4">
-            
-            <!-- User Information Section -->
-            <div id="user-info-card" class="bg-gray-50 p-6 rounded-lg shadow-sm">
-                <h2 id="user-info-header" class="text-2xl font-semibold text-gray-800 mb-4">User Details</h2>
-                <div id="user-info"></div>
+        {loading && (
+          <div className="flex justify-center items-center mt-8">
+            <div className="loading-spinner"></div>
+          </div>
+        )}
+
+        {resultsVisible && (
+          <div className="mt-8 space-y-4">
+            <div id="user-info-card" className="bg-gray-50 p-6 rounded-lg shadow-sm">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">{translations[language].userInfoHeader}</h2>
+              <div>
+                <div className="mb-2">
+                  <p className="text-sm font-medium text-gray-700">{translations[language].dateOfBirth}:</p>
+                  <p className="text-gray-600">{userInfo.dob}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{translations[language].birthPlace}:</p>
+                  <p className="text-gray-600">{userInfo.birthplace}</p>
+                </div>
+              </div>
             </div>
 
-            <!-- Astrological Details Section -->
-            <div id="astrological-details-card" class="bg-gray-50 p-6 rounded-lg shadow-sm">
-                <h2 id="astrological-details-header" class="text-2xl font-semibold text-gray-800 mb-4">Astrological Details</h2>
-                <div id="astrological-details"></div>
+            <div id="astrological-details-card" className="bg-gray-50 p-6 rounded-lg shadow-sm">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">{translations[language].astrologicalDetailsHeader}</h2>
+              <div>
+                <p className="text-gray-600 mb-4">{astrologicalDetails.details}</p>
+                {astrologicalDetails.birthplace_description && <p className="text-gray-600">{astrologicalDetails.birthplace_description}</p>}
+              </div>
             </div>
 
-            <!-- Horoscope Accordion -->
-            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                <h2 id="horoscope-header" class="text-2xl font-semibold text-gray-800 mb-4 p-4">Horoscopes</h2>
-                
-                <!-- Daily Horoscope Accordion Item -->
-                <div class="border-t border-gray-200">
-                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="daily-horoscope-content">
-                        <span class="text-lg font-medium text-gray-700 flex items-center"><i class="fas fa-sun mr-3 text-yellow-500"></i><span id="daily-horoscope-title">Daily Horoscope</span></span>
-                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
-                    </button>
-                    <div id="daily-horoscope-content" class="accordion-content p-4 bg-white">
-                        <div id="daily-horoscope" class="text-gray-600">
-                            <p>Loading...</p>
-                        </div>
-                    </div>
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4 p-4">{translations[language].horoscopeHeader}</h2>
+              {/* Daily Horoscope */}
+              <div className="border-t border-gray-200">
+                <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('daily-horoscope-content')}>
+                  <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-sun mr-3 text-yellow-500"></i><span>{translations[language].dailyHoroscopeTitle}</span></span>
+                  <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['daily-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
+                </button>
+                <div id="daily-horoscope-content" className={`accordion-content bg-white ${accordionState['daily-horoscope-content'] ? 'active' : ''}`}>
+                  <div className="p-4">
+                    <p className="text-gray-600">{horoscopes.daily_horoscope || translations[language].loading}</p>
+                  </div>
+                  {renderDailyHoroscopeSubsections()}
                 </div>
+              </div>
 
-                <!-- Daily Relationship Accordion Item -->
-                <div class="border-t border-gray-200">
-                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="relationships-content">
-                        <span class="text-lg font-medium text-gray-700 flex items-center"><i class="fas fa-heart mr-3 text-red-500"></i><span id="relationships-title">Daily Relationship Insights</span></span>
-                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
-                    </button>
-                    <div id="relationships-content" class="accordion-content p-4 bg-white">
-                        <div id="relationships" class="text-gray-600">
-                            <p>Loading...</p>
-                        </div>
-                    </div>
+              {/* Relationships */}
+              <div className="border-t border-gray-200">
+                <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('relationships-content')}>
+                  <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-heart mr-3 text-red-500"></i><span>{translations[language].relationshipsTitle}</span></span>
+                  <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['relationships-content'] ? 'rotated-icon' : ''}`}></i>
+                </button>
+                <div id="relationships-content" className={`accordion-content p-4 bg-white ${accordionState['relationships-content'] ? 'active' : ''}`}>
+                  <p className="text-gray-600">{horoscopes.relationships || translations[language].loading}</p>
                 </div>
+              </div>
 
-                <!-- Weekly Horoscope Accordion Item -->
-                <div class="border-t border-gray-200">
-                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="weekly-horoscope-content">
-                        <span class="text-lg font-medium text-gray-700 flex items-center"><i class="fas fa-calendar-week mr-3 text-blue-500"></i><span id="weekly-horoscope-title">Weekly Horoscope</span></span>
-                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
-                    </button>
-                    <div id="weekly-horoscope-content" class="accordion-content p-4 bg-white">
-                        <div id="weekly-horoscope" class="text-gray-600">
-                            <p>Loading...</p>
-                        </div>
-                    </div>
+              {/* Weekly Horoscope */}
+              <div className="border-t border-gray-200">
+                <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('weekly-horoscope-content')}>
+                  <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-calendar-week mr-3 text-blue-500"></i><span>{translations[language].weeklyHoroscopeTitle}</span></span>
+                  <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['weekly-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
+                </button>
+                <div id="weekly-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['weekly-horoscope-content'] ? 'active' : ''}`}>
+                  <p className="text-gray-600">{horoscopes.weekly_horoscope || translations[language].loading}</p>
                 </div>
+              </div>
 
-                <!-- Monthly Horoscope Accordion Item -->
-                <div class="border-t border-gray-200">
-                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="monthly-horoscope-content">
-                        <span class="text-lg font-medium text-gray-700 flex items-center"><i class="fas fa-calendar-days mr-3 text-green-500"></i><span id="monthly-horoscope-title">Monthly Horoscope</span></span>
-                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
-                    </button>
-                    <div id="monthly-horoscope-content" class="accordion-content p-4 bg-white">
-                        <div id="monthly-horoscope" class="text-gray-600">
-                            <p>Loading...</p>
-                        </div>
-                    </div>
+              {/* Monthly Horoscope */}
+              <div className="border-t border-gray-200">
+                <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('monthly-horoscope-content')}>
+                  <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-calendar-days mr-3 text-green-500"></i><span>{translations[language].monthlyHoroscopeTitle}</span></span>
+                  <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['monthly-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
+                </button>
+                <div id="monthly-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['monthly-horoscope-content'] ? 'active' : ''}`}>
+                  <p className="text-gray-600">{horoscopes.monthly_horoscope || translations[language].loading}</p>
                 </div>
+              </div>
 
-                <!-- Yearly Horoscope Accordion Item -->
-                <div class="border-t border-gray-200">
-                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="yearly-horoscope-content">
-                        <span class="text-lg font-medium text-gray-700 flex items-center"><i class="fas fa-calendar-alt mr-3 text-purple-500"></i><span id="yearly-horoscope-title">Yearly Horoscope</span></span>
-                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
-                    </button>
-                    <div id="yearly-horoscope-content" class="accordion-content p-4 bg-white">
-                        <div id="yearly-horoscope" class="text-gray-600">
-                            <p>Loading...</p>
-                        </div>
-                    </div>
+              {/* Yearly Horoscope */}
+              <div className="border-t border-gray-200">
+                <button type="button" className="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" onClick={() => toggleAccordion('yearly-horoscope-content')}>
+                  <span className="text-lg font-medium text-gray-700 flex items-center"><i className="fas fa-calendar-alt mr-3 text-purple-500"></i><span>{translations[language].yearlyHoroscopeTitle}</span></span>
+                  <i className={`fas fa-chevron-down text-gray-500 transition-transform duration-200 ${accordionState['yearly-horoscope-content'] ? 'rotated-icon' : ''}`}></i>
+                </button>
+                <div id="yearly-horoscope-content" className={`accordion-content p-4 bg-white ${accordionState['yearly-horoscope-content'] ? 'active' : ''}`}>
+                  <p className="text-gray-600">{horoscopes.yearly_horoscope || translations[language].loading}</p>
                 </div>
-
-                <!-- Life Stages Accordion Item -->
-                <div class="border-t border-gray-200">
-                    <button class="accordion-header w-full text-left p-4 flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200" data-target="life-stages-content">
-                        <span class="text-lg font-medium text-gray-700 flex items-center"><i class="fas fa-seedling mr-3 text-orange-500"></i><span id="life-stages-title">Life Stages</span></span>
-                        <i class="fas fa-chevron-down text-gray-500 transition-transform duration-200"></i>
-                    </button>
-                    <div id="life-stages-content" class="accordion-content p-4 bg-white">
-                        <div id="life-stages" class="text-gray-600">
-                            <p>Loading...</p>
-                        </div>
-                    </div>
-                </div>
+              </div>
             </div>
-        </div>
+          </div>
+        )}
 
-        <!-- Custom Alert/Error Modal -->
-        <div id="alert-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
-                <h3 class="text-lg font-medium text-gray-900" id="alert-title"></h3>
-                <div class="mt-2 text-sm text-gray-500" id="alert-message"></div>
-                <div class="mt-4 flex justify-end">
-                    <button type="button" id="alert-ok-btn" class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        OK
-                    </button>
-                </div>
+        {alert && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+              <h3 className="text-lg font-medium text-gray-900">{alert.title}</h3>
+              <div className="mt-2 text-sm text-gray-500">{alert.message}</div>
+              <div className="mt-4 flex justify-end">
+                <button type="button" onClick={() => setAlert(null)} className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                  OK
+                </button>
+              </div>
             </div>
-        </div>
+          </div>
+        )}
+      </div>
     </div>
+  );
+};
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('horoscope-form');
-            const submitBtn = document.getElementById('submit-btn');
-            const loading = document.getElementById('loading');
-            const resultsDiv = document.getElementById('results');
-            const userInfoDiv = document.getElementById('user-info');
-            const alertModal = document.getElementById('alert-modal');
-            const alertTitle = document.getElementById('alert-title');
-            const alertMessage = document.getElementById('alert-message');
-            const alertOkBtn = document.getElementById('alert-ok-btn');
-            const languageSelect = document.getElementById('language');
-            const dateFormatSelect = document.getElementById('date-format');
-            const dobInput = document.getElementById('dob');
-
-            const translations = {
-                en: {
-                    mainTitle: 'Personalized Horoscope & Astrology',
-                    mainSubtitle: 'Enter your details to get your unique astrological insights.',
-                    labelLanguage: 'Select Language',
-                    labelName: 'Full Name',
-                    placeholderName: 'e.g., John Doe',
-                    labelDob: 'Date of Birth',
-                    placeholderDobAd: 'YYYY-MM-DD',
-                    placeholderDobBs: 'YYYY-MM-DD BS',
-                    labelBirthplace: 'Birth Place',
-                    placeholderBirthplace: 'e.g., Kathmandu, Nepal',
-                    submitBtn: 'Get My Horoscope',
-                    pleaseWait: 'Please wait...',
-                    errorTitle: 'Error',
-                    errorMessage: 'Please fill in all the details.',
-                    errorRetrieval: 'Could not retrieve astrological details. Please try again.',
-                    errorOccurred: 'An error occurred. Details:',
-                    astrologicalDetailsHeader: 'Astrological Details',
-                    horoscopeHeader: 'Horoscopes',
-                    dailyHoroscopeTitle: 'Daily Horoscope',
-                    relationshipsTitle: 'Daily Relationship Insights',
-                    weeklyHoroscopeTitle: 'Weekly Horoscope',
-                    monthlyHoroscopeTitle: 'Monthly Horoscope',
-                    yearlyHoroscopeTitle: 'Yearly Horoscope',
-                    lifeStagesTitle: 'Life Stages',
-                    userInfoHeader: 'User Details',
-                    dateOfBirth: 'Date of Birth',
-                    birthPlace: 'Birth Place',
-                    dateformatAd: 'AD',
-                    dateformatBs: 'BS',
-                },
-                ne: {
-                    mainTitle: 'व्यक्तिगत राशिफल र ज्योतिष',
-                    mainSubtitle: 'आफ्नो अद्वितीय ज्योतिषीय अन्तर्दृष्टि प्राप्त गर्न आफ्नो विवरणहरू भर्नुहोस्।',
-                    labelLanguage: 'भाषा चयन गर्नुहोस्',
-                    labelName: 'पूरा नाम',
-                    placeholderName: 'उदाहरण: जोन डो',
-                    labelDob: 'जन्म मिति',
-                    placeholderDobAd: 'YYYY-MM-DD',
-                    placeholderDobBs: 'YYYY-MM-DD BS',
-                    labelBirthplace: 'जन्म स्थान',
-                    placeholderBirthplace: 'उदाहरण: काठमाडौं, नेपाल',
-                    submitBtn: 'मेरो राशिफल प्राप्त गर्नुहोस्',
-                    pleaseWait: 'कृपया पर्खनुहोस्...',
-                    errorTitle: 'त्रुटि',
-                    errorMessage: 'कृपया सबै जानकारी भर्नुहोस्।',
-                    errorRetrieval: 'ज्योतिषीय विवरण प्राप्त गर्न सकिएन। कृपया फेरि प्रयास गर्नुहोस्।',
-                    errorOccurred: 'एक त्रुटि भयो। विवरण:',
-                    astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
-                    horoscopeHeader: 'राशिफल',
-                    dailyHoroscopeTitle: 'दैनिक राशिफल',
-                    relationshipsTitle: 'दैनिक सम्बन्धको जानकारी',
-                    weeklyHoroscopeTitle: 'साप्ताहिक राशिफल',
-                    monthlyHoroscopeTitle: 'मासिक राशिफल',
-                    yearlyHoroscopeTitle: 'वार्षिक राशिफल',
-                    lifeStagesTitle: 'जीवनका चरणहरू',
-                    userInfoHeader: 'प्रयोगकर्ता विवरण',
-                    dateOfBirth: 'जन्म मिति',
-                    birthPlace: 'जन्म स्थान',
-                    dateformatAd: 'ई.सं.',
-                    dateformatBs: 'वि.सं.',
-                },
-                hi: {
-                    mainTitle: 'व्यक्तिगत राशिफल और ज्योतिष',
-                    mainSubtitle: 'अपनी अद्वितीय ज्योतिषीय अंतर्दृष्टि प्राप्त करने के लिए अपना विवरण दर्ज करें।',
-                    labelLanguage: 'भाषा चुनें',
-                    labelName: 'पूरा नाम',
-                    placeholderName: 'उदाहरण: जॉन डो',
-                    labelDob: 'जन्म तिथि',
-                    placeholderDobAd: 'YYYY-MM-DD',
-                    placeholderDobBs: 'YYYY-MM-DD BS',
-                    labelBirthplace: 'जन्म स्थान',
-                    placeholderBirthplace: 'उदाहरण: काठमांडू, नेपाल',
-                    submitBtn: 'मेरा राशिफल प्राप्त करें',
-                    pleaseWait: 'कृपया प्रतीक्षा करें...',
-                    errorTitle: 'त्रुटि',
-                    errorMessage: 'कृपया सभी विवरण भरें।',
-                    errorRetrieval: 'ज्योतिषीय विवरण प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।',
-                    errorOccurred: 'एक त्रुटि हुई। विवरण:',
-                    astrologicalDetailsHeader: 'ज्योतिषीय विवरण',
-                    horoscopeHeader: 'राशिफल',
-                    dailyHoroscopeTitle: 'दैनिक राशिफल',
-                    relationshipsTitle: 'दैनिक संबंध अंतर्दृष्टि',
-                    weeklyHoroscopeTitle: 'साप्ताहिक राशिफल',
-                    monthlyHoroscopeTitle: 'मासिक राशिफल',
-                    yearlyHoroscopeTitle: 'वार्षिक राशिफल',
-                    lifeStagesTitle: 'जीवन के चरण',
-                    userInfoHeader: 'उपयोगकर्ता विवरण',
-                    dateOfBirth: 'जन्म तिथि',
-                    birthPlace: 'जन्म स्थान',
-                    dateformatAd: 'ईस्वी',
-                    dateformatBs: 'बिक्रम संवत',
-                }
-            };
-
-            // Function to update all text based on selected language
-            function updateLanguage(lang) {
-                document.getElementById('main-title').textContent = translations[lang].mainTitle;
-                document.getElementById('main-subtitle').textContent = translations[lang].mainSubtitle;
-                document.getElementById('label-language').textContent = translations[lang].labelLanguage;
-                document.getElementById('label-name').textContent = translations[lang].labelName;
-                document.getElementById('name').placeholder = translations[lang].placeholderName;
-                document.getElementById('label-dob').textContent = translations[lang].labelDob;
-                document.getElementById('label-birthplace').textContent = translations[lang].labelBirthplace;
-                document.getElementById('birthplace').placeholder = translations[lang].placeholderBirthplace;
-                document.getElementById('submit-btn').innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${translations[lang].submitBtn}`;
-                
-                document.getElementById('astrological-details-header').textContent = translations[lang].astrologicalDetailsHeader;
-                document.getElementById('horoscope-header').textContent = translations[lang].horoscopeHeader;
-                document.getElementById('daily-horoscope-title').textContent = translations[lang].dailyHoroscopeTitle;
-                document.getElementById('relationships-title').textContent = translations[lang].relationshipsTitle;
-                document.getElementById('weekly-horoscope-title').textContent = translations[lang].weeklyHoroscopeTitle;
-                document.getElementById('monthly-horoscope-title').textContent = translations[lang].monthlyHoroscopeTitle;
-                document.getElementById('yearly-horoscope-title').textContent = translations[lang].yearlyHoroscopeTitle;
-                document.getElementById('life-stages-title').textContent = translations[lang].lifeStagesTitle;
-                document.getElementById('user-info-header').textContent = translations[lang].userInfoHeader;
-
-                // Update placeholder for date input based on format
-                if (dateFormatSelect.value === 'ad') {
-                    dobInput.placeholder = translations[lang].placeholderDobAd;
-                } else {
-                    dobInput.placeholder = translations[lang].placeholderDobBs;
-                }
-            }
-
-            // Function to convert BS to AD
-            function bsToAd(bsDate) {
-                const [bsYear, bsMonth, bsDay] = bsDate.split('-').map(Number);
-                const adYear = bsYear - 56;
-                const adDate = new Date(adYear, bsMonth - 1, bsDay - 15);
-                
-                // Adjust for the month and day difference
-                if (adDate.getMonth() !== bsMonth - 1) {
-                    adDate.setMonth(bsMonth - 1);
-                }
-                if (adDate.getDate() > 15) {
-                    adDate.setDate(adDate.getDate() - 15);
-                } else {
-                    adDate.setMonth(adDate.getMonth() - 1);
-                    adDate.setDate(adDate.getDate() + 30 - 15); // Rough correction
-                }
-
-                // A more accurate conversion would require a comprehensive mapping of BS dates.
-                // For this example, this approximation will serve.
-                return `${adDate.getFullYear()}-${String(adDate.getMonth() + 1).padStart(2, '0')}-${String(adDate.getDate()).padStart(2, '0')}`;
-            }
-
-            // Load saved user details from local storage
-            const savedDetails = localStorage.getItem('horoscopeUserDetails');
-            if (savedDetails) {
-                const userDetails = JSON.parse(savedDetails);
-                document.getElementById('name').value = userDetails.name || '';
-                document.getElementById('dob').value = userDetails.dob || '';
-                document.getElementById('birthplace').value = userDetails.birthplace || '';
-                document.getElementById('language').value = userDetails.language || 'en';
-                document.getElementById('date-format').value = userDetails.dateFormat || 'ad';
-            }
-            updateLanguage(languageSelect.value);
-
-            // Update placeholder when date format changes
-            dateFormatSelect.addEventListener('change', () => {
-                const lang = languageSelect.value;
-                if (dateFormatSelect.value === 'ad') {
-                    dobInput.placeholder = translations[lang].placeholderDobAd;
-                } else {
-                    dobInput.placeholder = translations[lang].placeholderDobBs;
-                }
-            });
-
-            // Accordion functionality
-            const accordionHeaders = document.querySelectorAll('.accordion-header');
-            accordionHeaders.forEach(header => {
-                header.addEventListener('click', () => {
-                    const content = document.getElementById(header.dataset.target);
-                    const icon = header.querySelector('.fa-chevron-down');
-                    
-                    const isActive = content.classList.contains('active');
-
-                    // Close all other accordions
-                    document.querySelectorAll('.accordion-content').forEach(accContent => {
-                        if (accContent !== content) {
-                             accContent.classList.remove('active');
-                             const otherIcon = accContent.previousElementSibling.querySelector('.fa-chevron-down');
-                             otherIcon.classList.remove('rotated-icon');
-                        }
-                    });
-
-                    // Toggle the clicked accordion
-                    content.classList.toggle('active');
-                    if (isActive) {
-                        icon.classList.remove('rotated-icon');
-                    } else {
-                        icon.classList.add('rotated-icon');
-                    }
-                });
-            });
-
-            // Set up a custom alert function to replace the browser's alert()
-            function showAlert(title, message) {
-                alertTitle.textContent = title;
-                alertMessage.textContent = message;
-                alertModal.classList.remove('hidden');
-                alertModal.classList.add('flex');
-            }
-
-            alertOkBtn.addEventListener('click', () => {
-                alertModal.classList.add('hidden');
-                alertModal.classList.remove('flex');
-            });
-
-            // Update header and button text when language changes
-            languageSelect.addEventListener('change', (e) => {
-                updateLanguage(e.target.value);
-            });
-
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const name = document.getElementById('name').value;
-                const dobInputVal = document.getElementById('dob').value;
-                const birthplace = document.getElementById('birthplace').value;
-                const language = document.getElementById('language').value;
-                const dateFormat = document.getElementById('date-format').value;
-
-                if (!name || !dobInputVal || !birthplace) {
-                    showAlert(translations[language].errorTitle, translations[language].errorMessage);
-                    return;
-                }
-                
-                let dobForApi;
-                if (dateFormat === 'bs') {
-                    dobForApi = bsToAd(dobInputVal);
-                } else {
-                    dobForApi = dobInputVal;
-                }
-
-                const userDetails = { name, dob: dobForApi, birthplace, language, dateFormat };
-                localStorage.setItem('horoscopeUserDetails', JSON.stringify(userDetails));
-
-                loading.classList.remove('hidden');
-                resultsDiv.classList.add('hidden');
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${translations[language].pleaseWait}`;
-                
-                // Reset previous results
-                const allSections = ['daily-horoscope', 'relationships', 'weekly-horoscope', 'monthly-horoscope', 'yearly-horoscope', 'life-stages', 'astrological-details'];
-                allSections.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.innerHTML = '<p>Loading...</p>';
-                    }
-                });
-                
-                // Display user info immediately
-                displayUserInfo(userDetails, language);
-
-                // Start the fast-loading and slow-loading API calls simultaneously
-                const fastLoadPromise = getFastLoadingData(userDetails);
-                const lifeStagesPromise = getLifeStagesData(userDetails);
-                
-                try {
-                    // Wait for the fast-loading data to finish and populate the UI
-                    const fastData = await fastLoadPromise;
-                    displayAstrologicalDetails(fastData.astrological_details, fastData.birthplace_description, language);
-                    displayHoroscope('daily', fastData.daily_horoscope, language);
-                    displayHoroscope('relationships', fastData.relationships, language);
-                    displayHoroscope('weekly', fastData.weekly_horoscope, language);
-                    displayHoroscope('monthly', fastData.monthly_horoscope, language);
-                    displayHoroscope('yearly', fastData.yearly_horoscope, language);
-                    resultsDiv.classList.remove('hidden');
-                    document.getElementById('daily-horoscope-content').classList.add('active'); // Open daily section
-                } catch (error) {
-                    console.error('Error fetching fast-loading data:', error);
-                    showAlert(translations[language].errorTitle, `${translations[language].errorOccurred} ${error.message}`);
-                } finally {
-                    loading.classList.add('hidden');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = `<i class="fa-solid fa-magic mr-2"></i> ${translations[language].submitBtn}`;
-                }
-
-                try {
-                    // Wait for the slow-loading data and populate the final section
-                    const lifeStagesData = await lifeStagesPromise;
-                    displayHoroscope('life-stages', lifeStagesData.life_stages, language);
-                } catch (error) {
-                    console.error('Error fetching life stages data:', error);
-                    showAlert(translations[language].errorTitle, `${translations[language].errorOccurred} while loading Life Stages: ${error.message}`);
-                    document.getElementById('life-stages').innerHTML = `<p class="text-red-500">Failed to load this section.</p>`;
-                }
-            });
-
-            async function getFastLoadingData({ name, dob, birthplace, language }) {
-                const nakshatraRashiData = `
-                    Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
-                    Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
-                    Rashi: मिथुन (Mithuna), नक्षेत्र: आद्रा (Audra), पुनर्वसु (Punarvasu), नामको सुरुको अक्षर: का, कि, कु, के, को, हा, हि, हु, हे, हो, दा, दी, दु, दे, दो
-                    Rashi: कर्कट (Karkata), नक्षेत्र: पुष्य (Pushya), आश्लेषा (Ashlesha), नामको सुरुको अक्षर: हु, हे, हो, डा, डि, डु, डे, डो
-                    Rashi: सिंह (Simha), नक्षेत्र: माघ (Magha), पूर्वाफाल्गुनी (Poorva Phalguni), उत्तराफाल्गुनी (Uttara Phalguni), नामको सुरुको अक्षर: मा, मी, मु, मे, मो, टा, टी, टु, टे, टो
-                    Rashi: कन्या (Kanya), नक्षेत्र: हस्त (Hastha), चित्रा (Chitra), नामको सुरुको अक्षर: पा, पी, पू, ष, ण, ठ, पे, पो, रा, री, रु, रे, रो, ता, ती, तु, ते, तो
-                    Rashi: तुला (Tula), नक्षेत्र: स्वाती (Swati), विशाखा (Visakha), नामको सुरुको अक्षर: रा, री, रु, रे, रो, ता, ती, तु, ते, तो
-                    Rashi: वृश्चिक (Vrishchika), नक्षेत्र: अनुराधा (Anuradha), ज्येष्ठा (Jyestha), नामको सुरुको अक्षर: तो, ना, नी, नु, ने, नो, या, यी, यु, ये, यो
-                    Rashi: धनु (Dhanus), नक्षेत्र: मूल (Moola), पूर्वाषाढा (Purva Ashadha), उत्तराषाढा (Uttarashada), नामको सुरुको अक्षर: ये, यो, भ, ध, फा, ढा, भे, भो, गा, गी
-                    Rashi: मकर (Makara), नक्षेत्र: श्रवण (Sravana), धनिष्ठा (Dhanishta), नामको सुरुको अक्षर: भो, जा, जी, जु, जे, जो, खा, खी, खु, खे, खो, ग, गी
-                    Rashi: कुम्भ (Kumbha), नक्षेत्र: शतभिषा (Sathabisham), पूर्वभाद्रपद (Purvabhadra), नामको सुरुको अक्षर: गो, सा, सी, सु, से, सो, दा, दी, दु, दे, दो, चा, ची
-                    Rashi: मीन (Meena), नक्षेत्र: उत्तरभाद्रपद (Uttarabhadra), रेवती (Revati), नामको सुरुको अक्षर: दि, दु, थ, झ, ञ, दे, दो, च, चि, द, दी
-                `;
-                
-                const currentDate = new Date().toISOString().slice(0, 10);
-                
-                const promptText = `
-                    Generate a comprehensive JSON object in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} with the following data points for a person with the name: ${name}, date of birth: ${dob}, and birthplace: ${birthplace}. 
-                    Use the provided Rashi and Nakshatra data to inform the astrological readings.
-                    The JSON object should have the following string properties:
-                    - 'astrological_details': A detailed and elaborate astrological reading including the person's Rashi.
-                    - 'birthplace_description': A short paragraph about the provided birthplace.
-                    - 'daily_horoscope': A detailed and specific daily horoscope for today's date: ${currentDate}.
-                    - 'weekly_horoscope': An elaborated paragraph for their horoscope for the coming week.
-                    - 'monthly_horoscope': An elaborated paragraph for their horoscope for the coming month.
-                    - 'yearly_horoscope': A comprehensive and detailed paragraph for their horoscope for the coming year.
-                    - 'relationships': A detailed and elaborate paragraph about how their daily relationships will be with family (dad, mom, siblings) and spouse/kids.
-                `;
-
-                const schema = {
-                    type: "OBJECT",
-                    properties: {
-                        "astrological_details": { "type": "STRING" },
-                        "birthplace_description": { "type": "STRING" },
-                        "daily_horoscope": { "type": "STRING" },
-                        "weekly_horoscope": { "type": "STRING" },
-                        "monthly_horoscope": { "type": "STRING" },
-                        "yearly_horoscope": { "type": "STRING" },
-                        "relationships": { "type": "STRING" }
-                    },
-                    required: [
-                        "astrological_details", "birthplace_description", "daily_horoscope",
-                        "weekly_horoscope", "monthly_horoscope", "yearly_horoscope", "relationships"
-                    ]
-                };
-
-                const chatHistory = [{ role: "user", parts: [{ text: promptText + nakshatraRashiData }] }];
-                const payload = {
-                    contents: chatHistory,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: schema
-                    }
-                };
-                
-                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-                let retryCount = 0;
-                const maxRetries = 5;
-                const initialDelay = 1000;
-
-                while (retryCount < maxRetries) {
-                    try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (!response.ok) {
-                            if (response.status === 429) {
-                                const delay = initialDelay * Math.pow(2, retryCount);
-                                console.warn(`API rate limit exceeded. Retrying in ${delay}ms...`);
-                                await new Promise(resolve => setTimeout(resolve, delay));
-                                retryCount++;
-                                continue;
-                            } else {
-                                throw new Error(`API returned status code: ${response.status}`);
-                            }
-                        }
-
-                        const result = await response.json();
-                        if (result.candidates && result.candidates.length > 0 &&
-                            result.candidates[0].content && result.candidates[0].content.parts &&
-                            result.candidates[0].content.parts.length > 0) {
-                            const jsonText = result.candidates[0].content.parts[0].text;
-                            try {
-                                const parsedJson = JSON.parse(jsonText);
-                                return parsedJson;
-                            } catch (parseError) {
-                                console.error('Failed to parse JSON:', parseError);
-                                const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-                                if (jsonMatch) {
-                                    return JSON.parse(jsonMatch[0]);
-                                }
-                                throw new Error('Invalid JSON format received from API.');
-                            }
-                        } else {
-                            throw new Error('Unexpected API response structure or no content.');
-                        }
-                    } catch (error) {
-                        console.error('Fetch error:', error);
-                        throw error;
-                    }
-                }
-                throw new Error('Max API retries exceeded for fast-loading data.');
-            }
-
-            async function getLifeStagesData({ name, dob, birthplace, language }) {
-                const nakshatraRashiData = `
-                    Rashi: मेष (Mesha), नक्षेत्र: अश्विनी (Aswini), भरणी (Bharani), कृत्तिका (Krithika), नामको सुरुको अक्षर: चु, चे, चो, ला, लि, लु, ले, लो, अ, ई, ऊ, ए
-                    Rashi: वृष (Vrishabha), नक्षेत्र: रोहिणी (Rohini), मृगशिरा (Mrigashiras), नामको सुरुको अक्षर: ओ, वा, वि, वु, वे, वो, का, कि, कु
-                    Rashi: मिथुन (Mithuna), नक्षेत्र: आद्रा (Audra), पुनर्वसु (Punarvasu), नामको सुरुको अक्षर: का, कि, कु, के, को, हा, हि, हु, हे, हो, दा, दी, दु, दे, दो
-                    Rashi: कर्कट (Karkata), नक्षेत्र: पुष्य (Pushya), आश्लेषा (Ashlesha), नामको सुरुको अक्षर: हु, हे, हो, डा, डि, डु, डे, डो
-                    Rashi: सिंह (Simha), नक्षेत्र: माघ (Magha), पूर्वाफाल्गुनी (Poorva Phalguni), उत्तराफाल्गुनी (Uttara Phalguni), नामको सुरुको अक्षर: मा, मी, मु, मे, मो, टा, टी, टु, टे, टो
-                    Rashi: कन्या (Kanya), नक्षेत्र: हस्त (Hastha), चित्रा (Chitra), नामको सुरुको अक्षर: पा, पी, पू, ष, ण, ठ, पे, पो, रा, री, रु, रे, रो, ता, ती, तु, ते, तो
-                    Rashi: तुला (Tula), नक्षेत्र: स्वाती (Swati), विशाखा (Visakha), नामको सुरुको अक्षर: रा, री, रु, रे, रो, ता, ती, तु, ते, तो
-                    Rashi: वृश्चिक (Vrishchika), नक्षेत्र: अनुराधा (Anuradha), ज्येष्ठा (Jyestha), नामको सुरुको अक्षर: तो, ना, नी, नु, ने, नो, या, यी, यु, ये, यो
-                    Rashi: धनु (Dhanus), नक्षेत्र: मूल (Moola), पूर्वाषाढा (Purva Ashadha), उत्तराषाढा (Uttarashada), नामको सुरुको अक्षर: ये, यो, भ, ध, फा, ढा, भे, भो, गा, गी
-                    Rashi: मकर (Makara), नक्षेत्र: श्रवण (Sravana), धनिष्ठा (Dhanishta), नामको सुरुको अक्षर: भो, जा, जी, जु, जे, जो, खा, खी, खु, खे, खो, ग, गी
-                    Rashi: कुम्भ (Kumbha), नक्षेत्र: शतभिषा (Sathabisham), पूर्वभाद्रपद (Purvabhadra), नामको सुरुको अक्षर: गो, सा, सी, सु, से, सो, दा, दी, दु, दे, दो, चा, ची
-                    Rashi: मीन (Meena), नक्षेत्र: उत्तरभाद्रपद (Uttarabhadra), रेवती (Revati), नामको सुरुको अक्षर: दि, दु, थ, झ, ञ, दे, दो, च, चि, द, दी
-                `;
-
-                const promptText = `
-                    Generate a JSON object in ${language === 'ne' ? 'Nepali' : (language === 'hi' ? 'Hindi' : 'English')} for a person with the name: ${name}, date of birth: ${dob}, and birthplace: ${birthplace}. 
-                    Use the provided Rashi and Nakshatra data. The JSON object should have a single string property named 'life_stages' which contains a detailed and structured paragraph covering the person's life in distinct 10-year blocks. Address the unique challenges and opportunities in each of these life phases, starting from their birth date.
-                `;
-
-                const schema = {
-                    type: "OBJECT",
-                    properties: { "life_stages": { "type": "STRING" } },
-                    required: ["life_stages"]
-                };
-
-                const chatHistory = [{ role: "user", parts: [{ text: promptText + nakshatraRashiData }] }];
-                const payload = {
-                    contents: chatHistory,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: schema
-                    }
-                };
-                
-                const apiKey = "AIzaSyB7XFRloLVbmnXUjU5mfcud5i-F2Ep6XVg";
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-                let retryCount = 0;
-                const maxRetries = 5;
-                const initialDelay = 1000;
-
-                while (retryCount < maxRetries) {
-                    try {
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (!response.ok) {
-                            if (response.status === 429) {
-                                const delay = initialDelay * Math.pow(2, retryCount);
-                                console.warn(`API rate limit exceeded. Retrying for life stages in ${delay}ms...`);
-                                await new Promise(resolve => setTimeout(resolve, delay));
-                                retryCount++;
-                                continue;
-                            } else {
-                                throw new Error(`API returned status code: ${response.status}`);
-                            }
-                        }
-
-                        const result = await response.json();
-                        if (result.candidates && result.candidates.length > 0 &&
-                            result.candidates[0].content && result.candidates[0].content.parts &&
-                            result.candidates[0].content.parts.length > 0) {
-                            const jsonText = result.candidates[0].content.parts[0].text;
-                            try {
-                                const parsedJson = JSON.parse(jsonText);
-                                return parsedJson;
-                            } catch (parseError) {
-                                console.error('Failed to parse JSON for life stages:', parseError);
-                                const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-                                if (jsonMatch) {
-                                    return JSON.parse(jsonMatch[0]);
-                                }
-                                throw new Error('Invalid JSON format received from API for life stages.');
-                            }
-                        } else {
-                            throw new Error('Unexpected API response structure or no content for life stages.');
-                        }
-                    } catch (error) {
-                        console.error('Fetch error for life stages:', error);
-                        throw error;
-                    }
-                }
-                throw new Error('Max API retries exceeded for life stages data.');
-            }
-            
-            function displayUserInfo(userDetails, language) {
-                const { dob, birthplace } = userDetails;
-                userInfoDiv.innerHTML = `
-                    <div class="mb-2">
-                        <p class="text-sm font-medium text-gray-700">${translations[language].dateOfBirth}:</p>
-                        <p class="text-gray-600">${dob}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-700">${translations[language].birthPlace}:</p>
-                        <p class="text-gray-600">${birthplace}</p>
-                    </div>
-                `;
-            }
-
-            function displayAstrologicalDetails(astrological_details, birthplace_description, language) {
-                document.getElementById('astrological-details').innerHTML = `
-                    <p class="text-gray-600 mb-4">${astrological_details}</p>
-                    ${birthplace_description ? `<p class="text-gray-600">${birthplace_description}</p>` : ''}
-                `;
-            }
-
-            function displayHoroscope(type, content, language) {
-                let contentDivId = type;
-                let headerId = `${type}-title`;
-                if (type !== 'relationships' && type !== 'astrological-details') {
-                     contentDivId = `${type}-horoscope`;
-                     headerId = `${type}-horoscope-title`;
-                }
-
-                const headerSpan = document.getElementById(headerId);
-                if (headerSpan) {
-                     const titleKey = type.replace(/-/g, '').replace(/(\b\w)/g, s => s.toUpperCase()).replace(/^(.)/, (s) => s.toLowerCase()) + 'Title';
-                     if (translations[language][titleKey]) {
-                         headerSpan.textContent = translations[language][titleKey];
-                     }
-                }
-                
-                const contentDiv = document.getElementById(contentDivId);
-                if (contentDiv) {
-                    contentDiv.innerHTML = `<p class="text-gray-600">${content}</p>`;
-                }
-            }
-        });
-    </script>
-</body>
-</html>
+export default App;
